@@ -1,0 +1,88 @@
+name: CI - Build, Test & SonarCloud
+
+on:
+  push:
+    branches: [ main, develop, "sprint/**" ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  build-test-sonar:
+    name: Build, Test & Analyze
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: semilleros_test
+          POSTGRES_USER: semilleros_user
+          POSTGRES_PASSWORD: semilleros_pass
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout código fuente
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # SonarCloud necesita historial completo
+
+      - name: Configurar JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Cache SonarCloud packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+
+      - name: Cache dependencias Maven
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+
+      - name: Compilar y ejecutar pruebas
+        env:
+          SPRING_PROFILES_ACTIVE: test
+          DB_URL: jdbc:postgresql://localhost:5432/semilleros_test
+          DB_USERNAME: semilleros_user
+          DB_PASSWORD: semilleros_pass
+          JWT_SECRET: test-secret-key-must-be-at-least-256-bits-long-for-hs256-ci
+          JWT_EXPIRATION_MS: 3600000
+          MAIL_HOST: localhost
+          MAIL_PORT: 1025
+          MAIL_USERNAME: ""
+          MAIL_PASSWORD: ""
+        run: mvn -B verify --file pom.xml
+
+      - name: Analizar con SonarCloud
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          mvn -B sonar:sonar \
+            -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }} \
+            -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }} \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
+            -Dsonar.qualitygate.wait=true
+
+      - name: Publicar reporte de cobertura
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: jacoco-report
+          path: target/site/jacoco/
+          retention-days: 14
