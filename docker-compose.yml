@@ -34,33 +34,6 @@ services:
     networks:
       - semilleros-net
 
-  # ─── Aplicación Spring Boot ───────────────────────────────────────────────
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: semilleros-app
-    restart: unless-stopped
-    depends_on:
-      postgres:
-        condition: service_healthy
-    environment:
-      SPRING_PROFILES_ACTIVE:  ${SPRING_PROFILES_ACTIVE:-dev}
-      DB_URL:                  jdbc:postgresql://postgres:5432/${DB_NAME:-semilleros_dev}
-      DB_USERNAME:             ${DB_USERNAME:-semilleros_user}
-      DB_PASSWORD:             ${DB_PASSWORD:-semilleros_pass}
-      JWT_SECRET:              ${JWT_SECRET}
-      JWT_EXPIRATION_MS:       ${JWT_EXPIRATION_MS:-86400000}
-      MAIL_HOST:               mailhog
-      MAIL_PORT:               1025
-      MAIL_USERNAME:           ""
-      MAIL_PASSWORD:           ""
-      APP_ADMIN_CORREO:        ${APP_ADMIN_CORREO:-admin@udea.edu.co}
-    ports:
-      - "${APP_PORT:-8080}:8080"
-    networks:
-      - semilleros-net
-
 volumes:
   postgres_data:
     name: semilleros_postgres_data

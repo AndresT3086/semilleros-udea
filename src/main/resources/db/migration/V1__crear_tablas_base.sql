@@ -8,7 +8,7 @@
 -- CAMPUS
 -- ----------------------
 CREATE TABLE IF NOT EXISTS campus (
-    id_campus    SERIAL PRIMARY KEY,
+    id_campus    BIGSERIAL PRIMARY KEY,
     nombre       VARCHAR(150) NOT NULL,
     ciudad       VARCHAR(100),
     departamento VARCHAR(100),
@@ -19,10 +19,10 @@ CREATE TABLE IF NOT EXISTS campus (
 -- UNIDAD_ACADEMICA (Facultades / Escuelas)
 -- ----------------------
 CREATE TABLE IF NOT EXISTS unidad_academica (
-    id_unidad  SERIAL PRIMARY KEY,
+    id_unidad  BIGSERIAL PRIMARY KEY,
     nombre     VARCHAR(200) NOT NULL,
     siglas     VARCHAR(20),
-    id_campus  INTEGER NOT NULL,
+    id_campus  BIGINT NOT NULL,
     CONSTRAINT fk_unidad_campus FOREIGN KEY (id_campus) REFERENCES campus (id_campus)
 );
 
@@ -30,10 +30,10 @@ CREATE TABLE IF NOT EXISTS unidad_academica (
 -- PROGRAMA_ACADEMICO
 -- ----------------------
 CREATE TABLE IF NOT EXISTS programa_academico (
-    id_programa INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id_programa BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     nombre      VARCHAR(200) NOT NULL,
     codigo      VARCHAR(20),
-    id_unidad   INTEGER NOT NULL,
+    id_unidad   BIGINT NOT NULL,
     CONSTRAINT fk_programa_unidad FOREIGN KEY (id_unidad) REFERENCES unidad_academica (id_unidad)
 );
 
@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS programa_academico (
 -- AREA_OCDE
 -- ----------------------
 CREATE TABLE IF NOT EXISTS area_ocde (
-    id_area     SERIAL PRIMARY KEY,
+    id_area     BIGSERIAL PRIMARY KEY,
     nombre      VARCHAR(200) NOT NULL,
     descripcion TEXT
 );
@@ -50,7 +50,7 @@ CREATE TABLE IF NOT EXISTS area_ocde (
 -- COORDINADOR (usuarios del sistema)
 -- ----------------------
 CREATE TABLE IF NOT EXISTS coordinador (
-    id_coordinador SERIAL PRIMARY KEY,
+    id_coordinador BIGSERIAL PRIMARY KEY,
     nombres        VARCHAR(100) NOT NULL,
     apellidos      VARCHAR(100) NOT NULL,
     correo         VARCHAR(150) NOT NULL UNIQUE,
@@ -65,7 +65,7 @@ CREATE TABLE IF NOT EXISTS coordinador (
 -- SEMILLERO
 -- ----------------------
 CREATE TABLE IF NOT EXISTS semillero (
-    id_semillero          SERIAL PRIMARY KEY,
+    id_semillero          BIGSERIAL PRIMARY KEY,
     codigo                VARCHAR(30)  NOT NULL UNIQUE,
     nombre                VARCHAR(300) NOT NULL,
     siglas                VARCHAR(30),
@@ -80,10 +80,10 @@ CREATE TABLE IF NOT EXISTS semillero (
     grupo_investigacion   VARCHAR(200),
     estado                VARCHAR(30)  NOT NULL DEFAULT 'BORRADOR',
     estado_caracterizacion VARCHAR(50) DEFAULT 'GENERAL_PENDIENTE',
-    id_unidad_academica   INTEGER,
-    id_campus             INTEGER,
-    id_area_ocde          INTEGER,
-    id_coordinador        INTEGER,
+    id_unidad_academica   BIGINT,
+    id_campus             BIGINT,
+    id_area_ocde          BIGINT,
+    id_coordinador        BIGINT,
     fecha_creacion        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     fecha_actualizacion   TIMESTAMPTZ,
     CONSTRAINT fk_semillero_unidad      FOREIGN KEY (id_unidad_academica) REFERENCES unidad_academica (id_unidad),
@@ -97,8 +97,8 @@ CREATE TABLE IF NOT EXISTS semillero (
 -- INSCRIPCION
 -- ----------------------
 CREATE TABLE IF NOT EXISTS inscripcion (
-    id_inscripcion      SERIAL PRIMARY KEY,
-    id_semillero        INTEGER      NOT NULL,
+    id_inscripcion      BIGSERIAL PRIMARY KEY,
+    id_semillero        BIGINT NOT NULL,
     nombres             VARCHAR(100) NOT NULL,
     apellidos           VARCHAR(100) NOT NULL,
     cedula              VARCHAR(15)  NOT NULL,
@@ -126,14 +126,14 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_inscripcion_activa
 -- SEMILLERO_INTEGRANTE
 -- ----------------------
 CREATE TABLE IF NOT EXISTS semillero_integrante (
-    id               SERIAL PRIMARY KEY,
-    id_semillero     INTEGER      NOT NULL,
+    id               BIGSERIAL PRIMARY KEY,
+    id_semillero     BIGINT      NOT NULL,
     nombres          VARCHAR(100) NOT NULL,
     apellidos        VARCHAR(100) NOT NULL,
     cedula           VARCHAR(15)  NOT NULL,
     correo           VARCHAR(150),
     telefono         VARCHAR(20),
-    id_programa      INTEGER,
+    id_programa      BIGINT,
     tipo_vinculacion VARCHAR(50),
     activo           BOOLEAN      NOT NULL DEFAULT TRUE,
     fecha_ingreso    DATE,
@@ -145,7 +145,7 @@ CREATE TABLE IF NOT EXISTS semillero_integrante (
 -- RECURSO
 -- ----------------------
 CREATE TABLE IF NOT EXISTS recurso (
-    id_recurso  SERIAL PRIMARY KEY,
+    id_recurso  BIGSERIAL PRIMARY KEY,
     nombre      VARCHAR(150) NOT NULL,
     descripcion TEXT
 );
@@ -154,8 +154,8 @@ CREATE TABLE IF NOT EXISTS recurso (
 -- SEMILLERO_RECURSO (relación N:M)
 -- ----------------------
 CREATE TABLE IF NOT EXISTS semillero_recurso (
-    id_semillero INTEGER NOT NULL,
-    id_recurso   INTEGER NOT NULL,
+    id_semillero BIGINT NOT NULL,
+    id_recurso   BIGINT NOT NULL,
     PRIMARY KEY (id_semillero, id_recurso),
     CONSTRAINT fk_sr_semillero FOREIGN KEY (id_semillero) REFERENCES semillero (id_semillero),
     CONSTRAINT fk_sr_recurso   FOREIGN KEY (id_recurso)   REFERENCES recurso (id_recurso)
@@ -165,7 +165,7 @@ CREATE TABLE IF NOT EXISTS semillero_recurso (
 -- FUENTE_FINANCIACION
 -- ----------------------
 CREATE TABLE IF NOT EXISTS fuente_financiacion (
-    id_fuente   SERIAL PRIMARY KEY,
+    id_fuente   BIGSERIAL PRIMARY KEY,
     nombre      VARCHAR(150) NOT NULL,
     descripcion TEXT
 );
@@ -174,8 +174,8 @@ CREATE TABLE IF NOT EXISTS fuente_financiacion (
 -- SEMILLERO_FINANCIACION (relación N:M)
 -- ----------------------
 CREATE TABLE IF NOT EXISTS semillero_financiacion (
-    id_semillero INTEGER NOT NULL,
-    id_fuente    INTEGER NOT NULL,
+    id_semillero BIGINT NOT NULL,
+    id_fuente    BIGINT NOT NULL,
     PRIMARY KEY (id_semillero, id_fuente),
     CONSTRAINT fk_sf_semillero FOREIGN KEY (id_semillero) REFERENCES semillero (id_semillero),
     CONSTRAINT fk_sf_fuente    FOREIGN KEY (id_fuente)    REFERENCES fuente_financiacion (id_fuente)
@@ -185,8 +185,8 @@ CREATE TABLE IF NOT EXISTS semillero_financiacion (
 -- ODS (Objetivos de Desarrollo Sostenible)
 -- ----------------------
 CREATE TABLE IF NOT EXISTS ods (
-    id_ods   SERIAL PRIMARY KEY,
-    numero   INTEGER      NOT NULL,
+    id_ods   BIGSERIAL PRIMARY KEY,
+    numero   BIGINT NOT NULL,
     nombre   VARCHAR(200) NOT NULL,
     icono    VARCHAR(255)
 );
@@ -195,8 +195,8 @@ CREATE TABLE IF NOT EXISTS ods (
 -- SEMILLERO_ODS (relación N:M)
 -- ----------------------
 CREATE TABLE IF NOT EXISTS semillero_ods (
-    id_semillero INTEGER NOT NULL,
-    id_ods       INTEGER NOT NULL,
+    id_semillero BIGINT NOT NULL,
+    id_ods       BIGINT NOT NULL,
     PRIMARY KEY (id_semillero, id_ods),
     CONSTRAINT fk_so_semillero FOREIGN KEY (id_semillero) REFERENCES semillero (id_semillero),
     CONSTRAINT fk_so_ods       FOREIGN KEY (id_ods)       REFERENCES ods (id_ods)
@@ -206,8 +206,8 @@ CREATE TABLE IF NOT EXISTS semillero_ods (
 -- DOFA
 -- ----------------------
 CREATE TABLE IF NOT EXISTS dofa (
-    id_dofa      SERIAL PRIMARY KEY,
-    id_semillero INTEGER     NOT NULL,
+    id_dofa      BIGSERIAL PRIMARY KEY,
+    id_semillero BIGINT NOT NULL,
     tipo         VARCHAR(20) NOT NULL,   -- FORTALEZA, DEBILIDAD, OPORTUNIDAD, AMENAZA
     descripcion  TEXT        NOT NULL,
     CONSTRAINT fk_dofa_semillero FOREIGN KEY (id_semillero) REFERENCES semillero (id_semillero),
@@ -218,7 +218,7 @@ CREATE TABLE IF NOT EXISTS dofa (
 -- ACTIVIDAD_CIENTIFICA
 -- ----------------------
 CREATE TABLE IF NOT EXISTS actividad_cientifica (
-    id_actividad SERIAL PRIMARY KEY,
+    id_actividad BIGSERIAL PRIMARY KEY,
     nombre       VARCHAR(200) NOT NULL,
     categoria    VARCHAR(100)
 );
@@ -227,8 +227,8 @@ CREATE TABLE IF NOT EXISTS actividad_cientifica (
 -- SEMILLERO_ACTIVIDAD (registro de si el semillero realiza cada actividad)
 -- ----------------------
 CREATE TABLE IF NOT EXISTS semillero_actividad (
-    id_semillero INTEGER NOT NULL,
-    id_actividad INTEGER NOT NULL,
+    id_semillero BIGINT NOT NULL,
+    id_actividad BIGINT NOT NULL,
     realiza      BOOLEAN NOT NULL DEFAULT FALSE,
     PRIMARY KEY (id_semillero, id_actividad),
     CONSTRAINT fk_sa_semillero  FOREIGN KEY (id_semillero) REFERENCES semillero (id_semillero),
@@ -239,8 +239,8 @@ CREATE TABLE IF NOT EXISTS semillero_actividad (
 -- PRODUCCION_ACADEMICA
 -- ----------------------
 CREATE TABLE IF NOT EXISTS produccion_academica (
-    id_produccion SERIAL PRIMARY KEY,
-    id_semillero  INTEGER      NOT NULL,
+    id_produccion BIGSERIAL PRIMARY KEY,
+    id_semillero  BIGINT NOT NULL,
     tipo          VARCHAR(100) NOT NULL,
     titulo        VARCHAR(500) NOT NULL,
     anio          INTEGER,
@@ -253,7 +253,7 @@ CREATE TABLE IF NOT EXISTS produccion_academica (
 -- EVENTO
 -- ----------------------
 CREATE TABLE IF NOT EXISTS evento (
-    id_evento    SERIAL PRIMARY KEY,
+    id_evento    BIGSERIAL PRIMARY KEY,
     nombre       VARCHAR(300) NOT NULL,
     tipo         VARCHAR(100),
     fecha        DATE,
@@ -265,9 +265,9 @@ CREATE TABLE IF NOT EXISTS evento (
 -- SEMILLERO_EVENTO (participación en eventos)
 -- ----------------------
 CREATE TABLE IF NOT EXISTS semillero_evento (
-    id            SERIAL PRIMARY KEY,
-    id_semillero  INTEGER NOT NULL,
-    id_evento     INTEGER NOT NULL,
+    id            BIGSERIAL PRIMARY KEY,
+    id_semillero  BIGINT NOT NULL,
+    id_evento     BIGINT NOT NULL,
     modalidad     VARCHAR(50),
     titulo_ponencia VARCHAR(400),
     anio          INTEGER,
