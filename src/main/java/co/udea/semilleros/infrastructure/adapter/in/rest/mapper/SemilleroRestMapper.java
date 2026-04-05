@@ -22,15 +22,15 @@ import java.util.List;
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface SemilleroRestMapper {
 
-    @Mapping(target = "facultad", source = "idUnidadAcademica", ignore = true)
-    @Mapping(target = "campus", source = "idCampus", ignore = true)
-    @Mapping(target = "estado", expression = "java(semillero.getEstado() != null ? semillero.getEstado().name() : null)")
+    @Mapping(target = "facultad", source = "nombreUnidad")
+    @Mapping(target = "campus",   source = "nombreCampus")
+    @Mapping(target = "estado",   expression = "java(semillero.getEstado() != null ? semillero.getEstado().name() : null)")
     SemilleroResumenResponse toResumenResponse(Semillero semillero);
 
-    @Mapping(target = "facultad", ignore = true)
-    @Mapping(target = "campus", ignore = true)
-    @Mapping(target = "areaOcde", ignore = true)
-    @Mapping(target = "estado", expression = "java(semillero.getEstado() != null ? semillero.getEstado().name() : null)")
+    @Mapping(target = "facultad",  source = "nombreUnidad")
+    @Mapping(target = "campus",    source = "nombreCampus")
+    @Mapping(target = "areaOcde",  source = "nombreAreaOcde")
+    @Mapping(target = "estado",    expression = "java(semillero.getEstado() != null ? semillero.getEstado().name() : null)")
     SemilleroDetalleResponse toDetalleResponse(Semillero semillero);
 
     @Mapping(target = "estado", expression = "java(inscripcion.getEstado() != null ? inscripcion.getEstado().name() : null)")

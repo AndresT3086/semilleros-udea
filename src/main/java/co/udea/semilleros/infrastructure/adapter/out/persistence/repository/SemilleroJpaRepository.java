@@ -18,24 +18,37 @@ public interface SemilleroJpaRepository extends JpaRepository<SemilleroEntity, L
             LEFT JOIN FETCH s.unidadAcademica ua
             LEFT JOIN FETCH s.campus c
             LEFT JOIN FETCH s.areaOcde a
-            WHERE s.estado = 'ACTIVO'
+            WHERE s.estado = :estado
             AND (:idUnidad IS NULL OR ua.id = :idUnidad)
             AND (:idCampus IS NULL OR c.id = :idCampus)
             AND (:idArea IS NULL OR a.id = :idArea)
-            AND (:palabraClave IS NULL OR (
-                LOWER(s.nombre) LIKE LOWER(CONCAT('%', :palabraClave, '%'))
-                OR LOWER(s.objetivo) LIKE LOWER(CONCAT('%', :palabraClave, '%'))
-                OR LOWER(s.mision) LIKE LOWER(CONCAT('%', :palabraClave, '%'))
-                OR LOWER(s.palabrasClave) LIKE LOWER(CONCAT('%', :palabraClave, '%'))
-            ))
+            AND (:palabraClave IS NULL
+                OR LOWER(CAST(s.nombre        AS string)) LIKE LOWER(CONCAT('%', :palabraClave, '%'))
+                OR LOWER(CAST(s.objetivo      AS string)) LIKE LOWER(CONCAT('%', :palabraClave, '%'))
+                OR LOWER(CAST(s.mision        AS string)) LIKE LOWER(CONCAT('%', :palabraClave, '%'))
+                OR LOWER(CAST(s.palabrasClave AS string)) LIKE LOWER(CONCAT('%', :palabraClave, '%'))
+                )
             """)
     Page<SemilleroEntity> buscarActivos(
-            @Param("idUnidad") Long idUnidad,
-            @Param("idCampus") Long idCampus,
-            @Param("idArea") Long idArea,
+            @Param("estado")       SemilleroEntity.EstadoSemilleroJpa estado,
+            @Param("idUnidad")     Long idUnidad,
+            @Param("idCampus")     Long idCampus,
+            @Param("idArea")       Long idArea,
             @Param("palabraClave") String palabraClave,
             Pageable pageable
     );
+
+    @Query("""
+            SELECT COUNT(i) FROM SemilleroIntegranteEntity i
+            WHERE i.semillero.id = :idSemillero AND i.activo = true
+            """)
+    Integer contarSemilleristas(@Param("idSemillero") Long idSemillero);
+
+    @Query("""
+            SELECT COUNT(sa) FROM SemilleroActividadEntity sa
+            WHERE sa.semillero.id = :idSemillero AND sa.realiza = true
+            """)
+    Integer contarActividadesCientificas(@Param("idSemillero") Long idSemillero);
 
     Optional<SemilleroEntity> findByCodigo(String codigo);
 

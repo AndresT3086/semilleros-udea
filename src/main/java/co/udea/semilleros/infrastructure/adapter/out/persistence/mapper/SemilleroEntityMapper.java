@@ -8,17 +8,20 @@ import org.mapstruct.*;
 public interface SemilleroEntityMapper {
 
     @Mapping(target = "idUnidadAcademica", source = "unidadAcademica.id")
-    @Mapping(target = "idCampus", source = "campus.id")
-    @Mapping(target = "idAreaOcde", source = "areaOcde.id")
-    @Mapping(target = "idCoordinador", source = "coordinador.id")
-    @Mapping(target = "estado", source = "estado", qualifiedByName = "estadoJpaADominio")
+    @Mapping(target = "idCampus",          source = "campus.id")
+    @Mapping(target = "idAreaOcde",        source = "areaOcde.id")
+    @Mapping(target = "idCoordinador",     source = "coordinador.id")
+    @Mapping(target = "nombreUnidad",      source = "unidadAcademica.nombre")
+    @Mapping(target = "nombreCampus",      source = "campus.nombre")
+    @Mapping(target = "nombreAreaOcde",    source = "areaOcde.nombre")
+    @Mapping(target = "estado",            source = "estado", qualifiedByName = "estadoJpaADominio")
     Semillero toDomain(SemilleroEntity entity);
 
     @Mapping(target = "unidadAcademica", ignore = true)
-    @Mapping(target = "campus", ignore = true)
-    @Mapping(target = "areaOcde", ignore = true)
-    @Mapping(target = "coordinador", ignore = true)
-    @Mapping(target = "estado", source = "estado", qualifiedByName = "estadoDominioAJpa")
+    @Mapping(target = "campus",          ignore = true)
+    @Mapping(target = "areaOcde",        ignore = true)
+    @Mapping(target = "coordinador",     ignore = true)
+    @Mapping(target = "estado",          source = "estado", qualifiedByName = "estadoDominioAJpa")
     SemilleroEntity toEntity(Semillero domain);
 
     @Named("estadoJpaADominio")

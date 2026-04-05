@@ -38,6 +38,10 @@ public class Semillero {
     private final Integer totalSemilleristas;
     private final Integer totalActividadesCientificas;
 
+    private final String nombreUnidad;
+    private final String nombreCampus;
+    private final String nombreAreaOcde;
+
     public enum EstadoSemillero {
         ACTIVO, INACTIVO, BORRADOR, CARACTERIZADO
     }

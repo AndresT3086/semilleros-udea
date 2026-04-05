@@ -32,7 +32,7 @@ buildNumber.properties
 *.iws
 *.iml
 *.ipr
-out/
+/out/
 .idea_modules/
 
 # ─── IDE - Eclipse ──────────────────────────────────────────
