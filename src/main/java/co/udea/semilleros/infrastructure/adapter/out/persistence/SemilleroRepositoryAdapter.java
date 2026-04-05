@@ -32,10 +32,9 @@ public class SemilleroRepositoryAdapter implements SemilleroRepositoryPort {
         int pagina = filtro.getPagina() != null ? filtro.getPagina() : 0;
         int tamano = filtro.getTamano() != null ? filtro.getTamano() : 15;
 
-        PageRequest pageRequest = PageRequest.of(pagina, tamano, Sort.by("nombre").ascending());
+        PageRequest pageRequest = PageRequest.of(pagina, tamano);
 
         Page<SemilleroEntity> page = semilleroJpaRepository.buscarActivos(
-                SemilleroEntity.EstadoSemilleroJpa.ACTIVO,
                 filtro.getIdUnidadAcademica(),
                 filtro.getIdCampus(),
                 filtro.getIdAreaOcde(),

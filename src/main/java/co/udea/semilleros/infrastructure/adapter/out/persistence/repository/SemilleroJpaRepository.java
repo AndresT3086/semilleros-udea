@@ -13,24 +13,42 @@ import java.util.Optional;
 @Repository
 public interface SemilleroJpaRepository extends JpaRepository<SemilleroEntity, Long> {
 
-    @Query("""
-            SELECT s FROM SemilleroEntity s
-            LEFT JOIN FETCH s.unidadAcademica ua
-            LEFT JOIN FETCH s.campus c
-            LEFT JOIN FETCH s.areaOcde a
-            WHERE s.estado = :estado
-            AND (:idUnidad IS NULL OR ua.id = :idUnidad)
-            AND (:idCampus IS NULL OR c.id = :idCampus)
-            AND (:idArea IS NULL OR a.id = :idArea)
-            AND (:palabraClave IS NULL
-                OR LOWER(CAST(s.nombre        AS string)) LIKE LOWER(CONCAT('%', :palabraClave, '%'))
-                OR LOWER(CAST(s.objetivo      AS string)) LIKE LOWER(CONCAT('%', :palabraClave, '%'))
-                OR LOWER(CAST(s.mision        AS string)) LIKE LOWER(CONCAT('%', :palabraClave, '%'))
-                OR LOWER(CAST(s.palabrasClave AS string)) LIKE LOWER(CONCAT('%', :palabraClave, '%'))
-                )
-            """)
+    @Query(
+            value = """
+            SELECT s.* FROM semillero s
+            LEFT JOIN unidad_academica ua ON ua.id_unidad = s.id_unidad_academica
+            LEFT JOIN campus            c  ON c.id_campus  = s.id_campus
+            LEFT JOIN area_ocde         ao ON ao.id_area   = s.id_area_ocde
+            WHERE s.estado = 'ACTIVO'
+              AND (:idUnidad    IS NULL OR s.id_unidad_academica = :idUnidad)
+              AND (:idCampus    IS NULL OR s.id_campus           = :idCampus)
+              AND (:idArea      IS NULL OR s.id_area_ocde        = :idArea)
+              AND (
+                    :palabraClave IS NULL
+                    OR unaccent(lower(s.nombre::text))        LIKE unaccent(lower('%' || :palabraClave || '%'))
+                    OR unaccent(lower(s.objetivo::text))      LIKE unaccent(lower('%' || :palabraClave || '%'))
+                    OR unaccent(lower(s.mision::text))        LIKE unaccent(lower('%' || :palabraClave || '%'))
+                    OR unaccent(lower(s.palabras_clave::text)) LIKE unaccent(lower('%' || :palabraClave || '%'))
+              )
+            ORDER BY s.nombre ASC
+            """,
+            countQuery = """
+            SELECT COUNT(*) FROM semillero s
+            WHERE s.estado = 'ACTIVO'
+              AND (:idUnidad    IS NULL OR s.id_unidad_academica = :idUnidad)
+              AND (:idCampus    IS NULL OR s.id_campus           = :idCampus)
+              AND (:idArea      IS NULL OR s.id_area_ocde        = :idArea)
+              AND (
+                    :palabraClave IS NULL
+                    OR unaccent(lower(s.nombre::text))        LIKE unaccent(lower('%' || :palabraClave || '%'))
+                    OR unaccent(lower(s.objetivo::text))      LIKE unaccent(lower('%' || :palabraClave || '%'))
+                    OR unaccent(lower(s.mision::text))        LIKE unaccent(lower('%' || :palabraClave || '%'))
+                    OR unaccent(lower(s.palabras_clave::text)) LIKE unaccent(lower('%' || :palabraClave || '%'))
+              )
+            """,
+            nativeQuery = true
+    )
     Page<SemilleroEntity> buscarActivos(
-            @Param("estado")       SemilleroEntity.EstadoSemilleroJpa estado,
             @Param("idUnidad")     Long idUnidad,
             @Param("idCampus")     Long idCampus,
             @Param("idArea")       Long idArea,
@@ -38,17 +56,11 @@ public interface SemilleroJpaRepository extends JpaRepository<SemilleroEntity, L
             Pageable pageable
     );
 
-    @Query("""
-            SELECT COUNT(i) FROM SemilleroIntegranteEntity i
-            WHERE i.semillero.id = :idSemillero AND i.activo = true
-            """)
-    Integer contarSemilleristas(@Param("idSemillero") Long idSemillero);
+    @Query(value = "SELECT COUNT(*) FROM semillero_integrante WHERE id_semillero = :id AND activo = true", nativeQuery = true)
+    Integer contarSemilleristas(@Param("id") Long id);
 
-    @Query("""
-            SELECT COUNT(sa) FROM SemilleroActividadEntity sa
-            WHERE sa.semillero.id = :idSemillero AND sa.realiza = true
-            """)
-    Integer contarActividadesCientificas(@Param("idSemillero") Long idSemillero);
+    @Query(value = "SELECT COUNT(*) FROM semillero_actividad WHERE id_semillero = :id AND realiza = true", nativeQuery = true)
+    Integer contarActividadesCientificas(@Param("id") Long id);
 
     Optional<SemilleroEntity> findByCodigo(String codigo);
 
