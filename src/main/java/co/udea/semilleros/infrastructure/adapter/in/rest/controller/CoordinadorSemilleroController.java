@@ -40,11 +40,10 @@ public class CoordinadorSemilleroController {
     @Operation(
         summary = "Iniciar caracterización de semillero",
         description = "Crea un semillero en estado BORRADOR con código único generado automáticamente. "
-                    + "Solo puede tener un semillero activo por coordinador."
+                    + "Permite al coordinador registrar un nuevo semillero para iniciar su caracterización."
     )
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Semillero borrador creado"),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "El coordinador ya tiene un semillero activo"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "No autenticado")
     })
     public ResponseEntity<ApiResponse<SemilleroDetalleResponse>> iniciarCaracterizacion(
