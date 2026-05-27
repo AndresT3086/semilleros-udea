@@ -4,6 +4,7 @@ import co.udea.semilleros.domain.model.PageResult;
 import co.udea.semilleros.domain.model.Semillero;
 import co.udea.semilleros.domain.model.SemilleroFiltro;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface SemilleroRepositoryPort {
@@ -14,7 +15,10 @@ public interface SemilleroRepositoryPort {
 
     Optional<Semillero> buscarPorCodigo(String codigo);
 
-    Optional<Semillero> buscarPorCoordinador(Long idCoordinador);
+    List<Semillero> buscarPorCoordinador(Long idCoordinador);
+
+    List<Semillero> buscarPorCoordinadorYEstados(Long idCoordinador, List<Semillero.EstadoSemillero> estados);
+
 
     Semillero guardar(Semillero semillero);
 

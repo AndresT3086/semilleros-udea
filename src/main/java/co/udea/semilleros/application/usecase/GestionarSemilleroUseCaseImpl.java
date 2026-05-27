@@ -4,9 +4,12 @@ import co.udea.semilleros.domain.exception.AccesoNoAutorizadoException;
 import co.udea.semilleros.domain.exception.CamposObligatoriosPendientesException;
 import co.udea.semilleros.domain.exception.RecursoNoEncontradoException;
 import co.udea.semilleros.domain.exception.SemilleroYaExisteException;
+import co.udea.semilleros.domain.model.Inscripcion;
 import co.udea.semilleros.domain.model.Semillero;
 import co.udea.semilleros.domain.port.in.GestionarSemilleroUseCase;
+import co.udea.semilleros.domain.port.out.InscripcionRepositoryPort;
 import co.udea.semilleros.domain.port.out.NotificacionEmailPort;
+import co.udea.semilleros.domain.port.out.SemilleroIntegranteRepositoryPort;
 import co.udea.semilleros.domain.port.out.SemilleroRepositoryPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,6 +25,8 @@ import java.util.List;
 public class GestionarSemilleroUseCaseImpl implements GestionarSemilleroUseCase {
 
     private final SemilleroRepositoryPort semilleroRepositoryPort;
+    private final InscripcionRepositoryPort inscripcionRepositoryPort;
+    private final SemilleroIntegranteRepositoryPort semilleroIntegranteRepositoryPort;
     private final NotificacionEmailPort notificacionEmailPort;
 
     @Value("${app.admin.correo:admin@udea.edu.co}")
@@ -30,11 +35,6 @@ public class GestionarSemilleroUseCaseImpl implements GestionarSemilleroUseCase 
     @Override
     @Transactional
     public Semillero crearSemilleroBorrador(Long idCoordinador) {
-        semilleroRepositoryPort.buscarPorCoordinador(idCoordinador).ifPresent(s -> {
-            if (s.getEstado() != Semillero.EstadoSemillero.INACTIVO) {
-                throw new SemilleroYaExisteException("coordinador", idCoordinador.toString());
-            }
-        });
 
         String codigo = generarCodigoUnico();
 
@@ -86,9 +86,18 @@ public class GestionarSemilleroUseCaseImpl implements GestionarSemilleroUseCase 
 
     @Override
     @Transactional(readOnly = true)
-    public Semillero obtenerSemilleroDelCoordinador(Long idCoordinador) {
-        return semilleroRepositoryPort.buscarPorCoordinador(idCoordinador)
-                .orElseThrow(() -> new RecursoNoEncontradoException("Semillero del coordinador", idCoordinador.toString()));
+    public List<Semillero> obtenerSemillerosDelCoordinador(Long idCoordinador) {
+        return semilleroRepositoryPort.buscarPorCoordinador(idCoordinador);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Semillero obtenerSemilleroDelCoordinadorPorId(Long idSemillero, Long idCoordinador) {
+        Semillero semillero = semilleroRepositoryPort.buscarPorId(idSemillero)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Semillero", idSemillero));
+
+        validarPropiedadDelCoordinador(semillero, idCoordinador);
+        return semillero;
     }
 
     @Override
@@ -148,5 +157,64 @@ public class GestionarSemilleroUseCaseImpl implements GestionarSemilleroUseCase 
         }
 
         return candidato;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Inscripcion> listarInscripcionesPendientes(Long idSemillero, Long idCoordinador) {
+        Semillero semillero = semilleroRepositoryPort.buscarPorId(idSemillero)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Semillero", idSemillero));
+
+        validarPropiedadDelCoordinador(semillero, idCoordinador);
+
+        return inscripcionRepositoryPort.buscarPorSemilleroYEstado(
+                idSemillero, Inscripcion.EstadoInscripcion.PENDIENTE);
+    }
+
+    @Override
+    @Transactional
+    public Inscripcion aprobarInscripcion(Long idInscripcion, Long idCoordinador) {
+        Inscripcion inscripcion = inscripcionRepositoryPort.buscarPorId(idInscripcion)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Inscripción", idInscripcion));
+
+        Semillero semillero = semilleroRepositoryPort.buscarPorId(inscripcion.getIdSemillero())
+                .orElseThrow(() -> new RecursoNoEncontradoException("Semillero", inscripcion.getIdSemillero()));
+
+        validarPropiedadDelCoordinador(semillero, idCoordinador);
+
+        Inscripcion aprobada = inscripcion
+                .withEstado(Inscripcion.EstadoInscripcion.APROBADO)
+                .withFechaActualizacion(LocalDateTime.now());
+
+        Inscripcion guardada = inscripcionRepositoryPort.guardar(aprobada);
+
+        semilleroIntegranteRepositoryPort.registrarIntegrante(
+                inscripcion.getIdSemillero(),
+                inscripcion.getNombres(),
+                inscripcion.getApellidos(),
+                inscripcion.getCedula(),
+                inscripcion.getCorreo(),
+                "ESTUDIANTE"
+        );
+
+        return guardada;
+    }
+
+    @Override
+    @Transactional
+    public Inscripcion rechazarInscripcion(Long idInscripcion, Long idCoordinador) {
+        Inscripcion inscripcion = inscripcionRepositoryPort.buscarPorId(idInscripcion)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Inscripción", idInscripcion));
+
+        Semillero semillero = semilleroRepositoryPort.buscarPorId(inscripcion.getIdSemillero())
+                .orElseThrow(() -> new RecursoNoEncontradoException("Semillero", inscripcion.getIdSemillero()));
+
+        validarPropiedadDelCoordinador(semillero, idCoordinador);
+
+        Inscripcion rechazada = inscripcion
+                .withEstado(Inscripcion.EstadoInscripcion.RECHAZADO)
+                .withFechaActualizacion(LocalDateTime.now());
+
+        return inscripcionRepositoryPort.guardar(rechazada);
     }
 }

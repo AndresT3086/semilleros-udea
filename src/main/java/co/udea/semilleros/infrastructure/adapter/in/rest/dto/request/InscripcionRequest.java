@@ -26,7 +26,7 @@ public class InscripcionRequest {
     private String cedula;
 
     @NotBlank(message = "El correo es obligatorio")
-    @Email(message = "El correo no tiene un formato válido")
+    @Email(message = "El correo debe tener un formato válido (ejemplo@dominio.com)")
     private String correo;
 
     @NotBlank(message = "El teléfono es obligatorio")

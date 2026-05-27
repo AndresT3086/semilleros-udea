@@ -10,7 +10,6 @@ import co.udea.semilleros.infrastructure.adapter.out.persistence.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -70,9 +69,25 @@ public class SemilleroRepositoryAdapter implements SemilleroRepositoryPort {
     }
 
     @Override
-    public Optional<Semillero> buscarPorCoordinador(Long idCoordinador) {
+    public List<Semillero> buscarPorCoordinador(Long idCoordinador) {
         return semilleroJpaRepository.findByCoordinadorId(idCoordinador)
-                .map(semilleroEntityMapper::toDomain);
+                .stream()
+                .map(semilleroEntityMapper::toDomain)
+                .toList();
+    }
+
+    @Override
+    public List<Semillero> buscarPorCoordinadorYEstados(Long idCoordinador,
+                                                        List<Semillero.EstadoSemillero> estados) {
+        List<SemilleroEntity.EstadoSemilleroJpa> estadosJpa = estados.stream()
+                .map(e -> SemilleroEntity.EstadoSemilleroJpa.valueOf(e.name()))
+                .toList();
+
+        return semilleroJpaRepository
+                .findByCoordinadorIdAndEstadoIn(idCoordinador, estadosJpa)
+                .stream()
+                .map(semilleroEntityMapper::toDomain)
+                .toList();
     }
 
     @Override

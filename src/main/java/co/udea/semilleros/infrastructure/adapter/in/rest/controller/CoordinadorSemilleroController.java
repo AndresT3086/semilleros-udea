@@ -20,13 +20,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/coordinador/semilleros")
@@ -61,15 +57,35 @@ public class CoordinadorSemilleroController {
                         semilleroRestMapper.toDetalleResponse(semillero)));
     }
 
-    @GetMapping("/mi-semillero")
+    @GetMapping("/mis-semilleros")
     @Operation(
-        summary = "Obtener semillero del coordinador autenticado",
+        summary = "Obtener semilleros del coordinador autenticado",
         description = "Retorna el semillero asociado al coordinador autenticado con el progreso de caracterización."
     )
-    public ResponseEntity<ApiResponse<SemilleroDetalleResponse>> obtenerMiSemillero(
+    public ResponseEntity<ApiResponse<List<SemilleroDetalleResponse>>> obtenerMisSemilleros(
             @AuthenticationPrincipal CoordinadorPrincipal principal
     ) {
-        Semillero semillero = gestionarSemilleroUseCase.obtenerSemilleroDelCoordinador(principal.getId());
+        List<SemilleroDetalleResponse> response = gestionarSemilleroUseCase
+                .obtenerSemillerosDelCoordinador(principal.getId())
+                .stream()
+                .map(semilleroRestMapper::toDetalleResponse)
+                .toList();
+
+        return ResponseEntity.ok(ApiResponse.exito(response));
+    }
+
+    @GetMapping("/{idSemillero}")
+    @Operation(
+            summary = "Obtener semillero específico del coordinador",
+            description = "Retorna el detalle de un semillero específico validando que pertenece al coordinador autenticado."
+    )
+    public ResponseEntity<ApiResponse<SemilleroDetalleResponse>> obtenerSemillero(
+            @PathVariable Long idSemillero,
+            @AuthenticationPrincipal CoordinadorPrincipal principal
+    ) {
+        Semillero semillero = gestionarSemilleroUseCase
+                .obtenerSemilleroDelCoordinadorPorId(idSemillero, principal.getId());
+
         return ResponseEntity.ok(ApiResponse.exito(semilleroRestMapper.toDetalleResponse(semillero)));
     }
 

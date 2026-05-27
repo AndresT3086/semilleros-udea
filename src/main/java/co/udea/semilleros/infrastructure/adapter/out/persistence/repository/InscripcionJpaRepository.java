@@ -6,6 +6,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface InscripcionJpaRepository extends JpaRepository<InscripcionEntity, Long> {
 
@@ -18,5 +20,10 @@ public interface InscripcionJpaRepository extends JpaRepository<InscripcionEntit
     boolean existeInscripcionActivaPorCorreoYSemillero(
             @Param("correo") String correo,
             @Param("idSemillero") Long idSemillero
+    );
+
+    List<InscripcionEntity> findBySemilleroIdAndEstado(
+            Long idSemillero,
+            InscripcionEntity.EstadoInscripcionJpa estado
     );
 }

@@ -2,6 +2,7 @@ package co.udea.semilleros.domain.port.out;
 
 import co.udea.semilleros.domain.model.Inscripcion;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface InscripcionRepositoryPort {
@@ -11,5 +12,8 @@ public interface InscripcionRepositoryPort {
     boolean existeInscripcionActivaPorCorreoYSemillero(String correo, Long idSemillero);
 
     Optional<Inscripcion> buscarPorId(Long id);
+
+    List<Inscripcion> buscarPorSemilleroYEstado(Long idSemillero, Inscripcion.EstadoInscripcion estado);
+
 
 }

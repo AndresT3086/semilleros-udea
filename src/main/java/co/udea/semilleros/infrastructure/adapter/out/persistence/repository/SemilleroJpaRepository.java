@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -64,7 +65,12 @@ public interface SemilleroJpaRepository extends JpaRepository<SemilleroEntity, L
 
     Optional<SemilleroEntity> findByCodigo(String codigo);
 
-    Optional<SemilleroEntity> findByCoordinadorId(Long idCoordinador);
+    List<SemilleroEntity> findByCoordinadorId(Long idCoordinador);
+
+    List<SemilleroEntity> findByCoordinadorIdAndEstadoIn(
+            Long idCoordinador,
+            List<SemilleroEntity.EstadoSemilleroJpa> estados
+    );
 
     boolean existsByNombre(String nombre);
 

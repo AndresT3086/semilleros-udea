@@ -10,6 +10,7 @@ import co.udea.semilleros.infrastructure.adapter.out.persistence.repository.Semi
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Optional;
 
 @Component
@@ -40,5 +41,17 @@ public class InscripcionRepositoryAdapter implements InscripcionRepositoryPort {
     public Optional<Inscripcion> buscarPorId(Long id) {
         return inscripcionJpaRepository.findById(id)
                 .map(inscripcionEntityMapper::toDomain);
+    }
+
+    @Override
+    public List<Inscripcion> buscarPorSemilleroYEstado(Long idSemillero,
+                                                       Inscripcion.EstadoInscripcion estado) {
+        return inscripcionJpaRepository
+                .findBySemilleroIdAndEstado(
+                        idSemillero,
+                        InscripcionEntity.EstadoInscripcionJpa.valueOf(estado.name()))
+                .stream()
+                .map(inscripcionEntityMapper::toDomain)
+                .toList();
     }
 }
