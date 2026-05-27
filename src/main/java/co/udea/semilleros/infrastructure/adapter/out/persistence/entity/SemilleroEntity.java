@@ -24,7 +24,7 @@ public class SemilleroEntity {
     @Column(name = "codigo", nullable = false, unique = true, length = 30)
     private String codigo;
 
-    @Column(name = "nombre", nullable = false, length = 300)
+    @Column(name = "nombre", nullable = true, length = 300)
     private String nombre;
 
     @Column(name = "siglas", length = 30)

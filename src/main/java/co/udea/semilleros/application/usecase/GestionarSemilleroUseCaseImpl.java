@@ -29,12 +29,29 @@ public class GestionarSemilleroUseCaseImpl implements GestionarSemilleroUseCase 
     private final SemilleroIntegranteRepositoryPort semilleroIntegranteRepositoryPort;
     private final NotificacionEmailPort notificacionEmailPort;
 
+    private static final String SEMILLERO = "Semillero";
+
     @Value("${app.admin.correo:admin@udea.edu.co}")
     private String correoAdministrador;
 
     @Override
     @Transactional
     public Semillero crearSemilleroBorrador(Long idCoordinador) {
+
+        List<Semillero> existentes = semilleroRepositoryPort.buscarPorCoordinadorYEstados(
+                idCoordinador,
+                List.of(Semillero.EstadoSemillero.BORRADOR)
+        );
+
+        boolean tieneBorradorSinNombre = existentes.stream()
+                .anyMatch(s -> s.getNombre() == null || s.getNombre().isBlank());
+
+        if (tieneBorradorSinNombre) {
+            return existentes.stream()
+                    .filter(s -> s.getNombre() == null || s.getNombre().isBlank())
+                    .findFirst()
+                    .get();
+        }
 
         String codigo = generarCodigoUnico();
 
@@ -53,7 +70,7 @@ public class GestionarSemilleroUseCaseImpl implements GestionarSemilleroUseCase 
     @Transactional
     public Semillero guardarPestanaGeneral(Long idSemillero, Long idCoordinador, Semillero datos) {
         Semillero existente = semilleroRepositoryPort.buscarPorId(idSemillero)
-                .orElseThrow(() -> new RecursoNoEncontradoException("Semillero", idSemillero));
+                .orElseThrow(() -> new RecursoNoEncontradoException(SEMILLERO, idSemillero));
 
         validarPropiedadDelCoordinador(existente, idCoordinador);
         validarCamposObligatoriosGeneral(datos);
@@ -94,7 +111,7 @@ public class GestionarSemilleroUseCaseImpl implements GestionarSemilleroUseCase 
     @Transactional(readOnly = true)
     public Semillero obtenerSemilleroDelCoordinadorPorId(Long idSemillero, Long idCoordinador) {
         Semillero semillero = semilleroRepositoryPort.buscarPorId(idSemillero)
-                .orElseThrow(() -> new RecursoNoEncontradoException("Semillero", idSemillero));
+                .orElseThrow(() -> new RecursoNoEncontradoException(SEMILLERO, idSemillero));
 
         validarPropiedadDelCoordinador(semillero, idCoordinador);
         return semillero;
@@ -104,7 +121,7 @@ public class GestionarSemilleroUseCaseImpl implements GestionarSemilleroUseCase 
     @Transactional
     public Semillero finalizarCaracterizacion(Long idSemillero, Long idCoordinador) {
         Semillero semillero = semilleroRepositoryPort.buscarPorId(idSemillero)
-                .orElseThrow(() -> new RecursoNoEncontradoException("Semillero", idSemillero));
+                .orElseThrow(() -> new RecursoNoEncontradoException(SEMILLERO, idSemillero));
 
         validarPropiedadDelCoordinador(semillero, idCoordinador);
 
@@ -163,7 +180,7 @@ public class GestionarSemilleroUseCaseImpl implements GestionarSemilleroUseCase 
     @Transactional(readOnly = true)
     public List<Inscripcion> listarInscripcionesPendientes(Long idSemillero, Long idCoordinador) {
         Semillero semillero = semilleroRepositoryPort.buscarPorId(idSemillero)
-                .orElseThrow(() -> new RecursoNoEncontradoException("Semillero", idSemillero));
+                .orElseThrow(() -> new RecursoNoEncontradoException(SEMILLERO, idSemillero));
 
         validarPropiedadDelCoordinador(semillero, idCoordinador);
 
@@ -178,7 +195,7 @@ public class GestionarSemilleroUseCaseImpl implements GestionarSemilleroUseCase 
                 .orElseThrow(() -> new RecursoNoEncontradoException("Inscripción", idInscripcion));
 
         Semillero semillero = semilleroRepositoryPort.buscarPorId(inscripcion.getIdSemillero())
-                .orElseThrow(() -> new RecursoNoEncontradoException("Semillero", inscripcion.getIdSemillero()));
+                .orElseThrow(() -> new RecursoNoEncontradoException(SEMILLERO, inscripcion.getIdSemillero()));
 
         validarPropiedadDelCoordinador(semillero, idCoordinador);
 
@@ -207,7 +224,7 @@ public class GestionarSemilleroUseCaseImpl implements GestionarSemilleroUseCase 
                 .orElseThrow(() -> new RecursoNoEncontradoException("Inscripción", idInscripcion));
 
         Semillero semillero = semilleroRepositoryPort.buscarPorId(inscripcion.getIdSemillero())
-                .orElseThrow(() -> new RecursoNoEncontradoException("Semillero", inscripcion.getIdSemillero()));
+                .orElseThrow(() -> new RecursoNoEncontradoException(SEMILLERO, inscripcion.getIdSemillero()));
 
         validarPropiedadDelCoordinador(semillero, idCoordinador);
 
