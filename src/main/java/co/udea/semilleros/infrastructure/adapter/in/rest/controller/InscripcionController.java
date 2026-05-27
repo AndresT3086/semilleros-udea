@@ -33,7 +33,7 @@ public class InscripcionController {
     @PostMapping
     @Operation(
         summary = "Inscribirse a un semillero",
-        description = "Permite a un estudiante con correo @udea.edu.co solicitar inscripción a un semillero activo. "
+        description = "Permite a un estudiante   solicitar inscripción a un semillero activo. "
                     + "La solicitud queda en estado PENDIENTE y se notifica al coordinador."
     )
     @ApiResponses({

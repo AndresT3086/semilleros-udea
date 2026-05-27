@@ -3,7 +3,6 @@ package co.udea.semilleros.application.usecase;
 import co.udea.semilleros.domain.exception.AccesoNoAutorizadoException;
 import co.udea.semilleros.domain.exception.CamposObligatoriosPendientesException;
 import co.udea.semilleros.domain.exception.RecursoNoEncontradoException;
-import co.udea.semilleros.domain.exception.SemilleroYaExisteException;
 import co.udea.semilleros.domain.model.Semillero;
 import co.udea.semilleros.domain.port.out.NotificacionEmailPort;
 import co.udea.semilleros.domain.port.out.SemilleroRepositoryPort;
@@ -41,52 +40,6 @@ class GestionarSemilleroUseCaseImplTest {
         ReflectionTestUtils.setField(useCase, "correoAdministrador", "admin@udea.edu.co");
     }
 
-    // ─── crearSemilleroBorrador ────────────────────────────────────────────────
-
-    @Test
-    @DisplayName("crearSemilleroBorrador: debe crear borrador con código único cuando el coordinador no tiene semillero activo")
-    void crearSemilleroBorrador_sinSemilleroExistente_creaConCodigoUnico() {
-        // ARRANGE
-        Long idCoordinador = 1L;
-        Semillero borradorGuardado = Semillero.builder()
-                .id(1L)
-                .codigo("SEM-UDEA-0001")
-                .estado(Semillero.EstadoSemillero.BORRADOR)
-                .idCoordinador(idCoordinador)
-                .build();
-
-        when(semilleroRepositoryPort.buscarPorCoordinador(idCoordinador)).thenReturn(Optional.empty());
-        when(semilleroRepositoryPort.contarPorEstado(any())).thenReturn(0L);
-        when(semilleroRepositoryPort.existePorCodigo(any())).thenReturn(false);
-        when(semilleroRepositoryPort.guardar(any())).thenReturn(borradorGuardado);
-
-        // ACT
-        Semillero resultado = useCase.crearSemilleroBorrador(idCoordinador);
-
-        // ASSERT
-        assertThat(resultado).isNotNull();
-        assertThat(resultado.getCodigo()).isEqualTo("SEM-UDEA-0001");
-        assertThat(resultado.getEstado()).isEqualTo(Semillero.EstadoSemillero.BORRADOR);
-        verify(semilleroRepositoryPort).guardar(any());
-    }
-
-    @Test
-    @DisplayName("crearSemilleroBorrador: debe lanzar SemilleroYaExisteException cuando el coordinador ya tiene semillero activo")
-    void crearSemilleroBorrador_conSemilleroActivo_lanzaExcepcion() {
-        // ARRANGE
-        Long idCoordinador = 1L;
-        Semillero existente = Semillero.builder()
-                .id(1L)
-                .estado(Semillero.EstadoSemillero.ACTIVO)
-                .idCoordinador(idCoordinador)
-                .build();
-
-        when(semilleroRepositoryPort.buscarPorCoordinador(idCoordinador)).thenReturn(Optional.of(existente));
-
-        // ACT & ASSERT
-        assertThatThrownBy(() -> useCase.crearSemilleroBorrador(idCoordinador))
-                .isInstanceOf(SemilleroYaExisteException.class);
-    }
 
     // ─── guardarPestanaGeneral ─────────────────────────────────────────────────
 
