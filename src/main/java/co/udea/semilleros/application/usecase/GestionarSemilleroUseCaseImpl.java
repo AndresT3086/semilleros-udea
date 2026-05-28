@@ -7,10 +7,7 @@ import co.udea.semilleros.domain.exception.SemilleroYaExisteException;
 import co.udea.semilleros.domain.model.Inscripcion;
 import co.udea.semilleros.domain.model.Semillero;
 import co.udea.semilleros.domain.port.in.GestionarSemilleroUseCase;
-import co.udea.semilleros.domain.port.out.InscripcionRepositoryPort;
-import co.udea.semilleros.domain.port.out.NotificacionEmailPort;
-import co.udea.semilleros.domain.port.out.SemilleroIntegranteRepositoryPort;
-import co.udea.semilleros.domain.port.out.SemilleroRepositoryPort;
+import co.udea.semilleros.domain.port.out.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -28,6 +25,12 @@ public class GestionarSemilleroUseCaseImpl implements GestionarSemilleroUseCase 
     private final InscripcionRepositoryPort inscripcionRepositoryPort;
     private final SemilleroIntegranteRepositoryPort semilleroIntegranteRepositoryPort;
     private final NotificacionEmailPort notificacionEmailPort;
+    private final ProduccionAcademicaRepositoryPort produccionRepositoryPort;
+    private final OrganizacionSemilleroRepositoryPort organizacionRepositoryPort;
+    private final DofaRepositoryPort dofaRepositoryPort;
+    private final OdsRepositoryPort odsRepositoryPort;
+    private final ActividadesRepositoryPort actividadesRepositoryPort;
+    private final RelacionamientoRepositoryPort relacionamientoRepositoryPort;
 
     private static final String SEMILLERO = "Semillero";
 
@@ -75,9 +78,12 @@ public class GestionarSemilleroUseCaseImpl implements GestionarSemilleroUseCase 
         validarPropiedadDelCoordinador(existente, idCoordinador);
         validarCamposObligatoriosGeneral(datos);
 
-        if (!existente.getNombre().equals(datos.getNombre())
-                && semilleroRepositoryPort.existePorNombre(datos.getNombre())) {
-            throw new SemilleroYaExisteException("nombre", datos.getNombre());
+        String nombreExistente = existente.getNombre();
+        String nombreNuevo = datos.getNombre();
+        boolean nombreCambia = !nombreNuevo.equals(nombreExistente);
+
+        if (nombreCambia && semilleroRepositoryPort.existePorNombre(nombreNuevo)) {
+            throw new SemilleroYaExisteException("nombre", nombreNuevo);
         }
 
         Semillero actualizado = existente
@@ -115,26 +121,6 @@ public class GestionarSemilleroUseCaseImpl implements GestionarSemilleroUseCase 
 
         validarPropiedadDelCoordinador(semillero, idCoordinador);
         return semillero;
-    }
-
-    @Override
-    @Transactional
-    public Semillero finalizarCaracterizacion(Long idSemillero, Long idCoordinador) {
-        Semillero semillero = semilleroRepositoryPort.buscarPorId(idSemillero)
-                .orElseThrow(() -> new RecursoNoEncontradoException(SEMILLERO, idSemillero));
-
-        validarPropiedadDelCoordinador(semillero, idCoordinador);
-
-        Semillero finalizado = semillero
-                .withEstado(Semillero.EstadoSemillero.CARACTERIZADO)
-                .withEstadoCaracterizacion("COMPLETO")
-                .withFechaActualizacion(LocalDateTime.now());
-
-        Semillero guardado = semilleroRepositoryPort.guardar(finalizado);
-
-        notificacionEmailPort.notificarFinalizacionCaracterizacion(guardado, correoAdministrador);
-
-        return guardado;
     }
 
     private void validarPropiedadDelCoordinador(Semillero semillero, Long idCoordinador) {
@@ -233,5 +219,201 @@ public class GestionarSemilleroUseCaseImpl implements GestionarSemilleroUseCase 
                 .withFechaActualizacion(LocalDateTime.now());
 
         return inscripcionRepositoryPort.guardar(rechazada);
+    }
+
+    @Override
+    @Transactional
+    public Semillero guardarPestanaProduccion(
+            Long idSemillero, Long idCoordinador,
+            Boolean tienenArticulos,    Integer cantidadArticulos,
+            Boolean tienenLibros,       Integer cantidadLibros,
+            Boolean organizanEventos,   Integer cantidadEventos,
+            Boolean participanEventos,  Integer cantidadParticipaciones) {
+
+        Semillero semillero = obtenerYValidar(idSemillero, idCoordinador);
+
+        produccionRepositoryPort.guardarProduccionResumen(
+                idSemillero,
+                tienenArticulos,   cantidadArticulos,
+                tienenLibros,      cantidadLibros,
+                organizanEventos,  cantidadEventos,
+                participanEventos, cantidadParticipaciones
+        );
+
+        return actualizarEstadoPestana(semillero, "PRODUCCION");
+    }
+
+    @Override
+    @Transactional
+    public Semillero guardarPestanaOrganizacion(Long idSemillero, Long idCoordinador,
+                                                List<Long> idsRecursos, List<Long> idsFuentes) {
+
+        Semillero semillero = obtenerYValidar(idSemillero, idCoordinador);
+
+        if (idsRecursos == null || idsRecursos.isEmpty()) {
+            throw new CamposObligatoriosPendientesException("Organización",
+                    List.of("recursos (seleccione al menos uno o Ninguno)"));
+        }
+        if (idsFuentes == null || idsFuentes.isEmpty()) {
+            throw new CamposObligatoriosPendientesException("Organización",
+                    List.of("fuentesFinanciacion (seleccione al menos una o Sin financiación)"));
+        }
+
+        organizacionRepositoryPort.guardarRecursos(idSemillero, idsRecursos);
+        organizacionRepositoryPort.guardarFuentesFinanciacion(idSemillero, idsFuentes);
+
+        return actualizarEstadoPestana(semillero, "ORGANIZACION");
+    }
+
+    @Override
+    @Transactional
+    public Semillero guardarPestanaRelacionamiento(
+            Long idSemillero,
+            Long idCoordinador,
+            Boolean adscritoGrupo,
+            String grupoInvestigacion,
+            String relacionGrupo,
+            String centroInvestigaciones,
+            String relacionCentro,
+            String departamento,
+            String relacionDepartamento,
+            String facultad,
+            String relacionFacultad) {
+
+        Semillero semillero = obtenerYValidar(idSemillero, idCoordinador);
+
+        relacionamientoRepositoryPort.guardarRelacionamiento(
+                idSemillero,
+                adscritoGrupo,
+                grupoInvestigacion,
+                relacionGrupo,
+                centroInvestigaciones,
+                relacionCentro,
+                departamento,
+                relacionDepartamento,
+                facultad,
+                relacionFacultad
+        );
+        return actualizarEstadoPestana(semillero, "RELACIONAMIENTO");
+    }
+
+    @Override
+    @Transactional
+    public Semillero guardarPestanaActividades(Long idSemillero, Long idCoordinador,
+                                               List<ActividadesRepositoryPort.ActividadDto> actividades) {
+
+        Semillero semillero = obtenerYValidar(idSemillero, idCoordinador);
+
+        if (actividades == null || actividades.isEmpty()) {
+            throw new CamposObligatoriosPendientesException("Actividades",
+                    List.of("actividades (debe indicar al menos una actividad)"));
+        }
+
+        actividadesRepositoryPort.actualizarActividades(idSemillero, actividades);
+
+        return actualizarEstadoPestana(semillero, "ACTIVIDADES");
+    }
+
+    @Override
+    @Transactional
+    public Semillero guardarPestanaDofa(Long idSemillero, Long idCoordinador,
+                                        String fortalezas, String debilidades,
+                                        String oportunidades, String amenazas) {
+
+        Semillero semillero = obtenerYValidar(idSemillero, idCoordinador);
+
+        List<String> faltantes = new ArrayList<>();
+        if (fortalezas   == null || fortalezas.isBlank())   faltantes.add("fortalezas");
+        if (debilidades  == null || debilidades.isBlank())  faltantes.add("debilidades");
+        if (oportunidades == null || oportunidades.isBlank()) faltantes.add("oportunidades");
+        if (amenazas     == null || amenazas.isBlank())     faltantes.add("amenazas");
+
+        if (!faltantes.isEmpty()) {
+            throw new CamposObligatoriosPendientesException("DOFA", faltantes);
+        }
+
+        dofaRepositoryPort.guardarDofa(idSemillero, fortalezas, debilidades, oportunidades, amenazas);
+
+        return actualizarEstadoPestana(semillero, "DOFA");
+    }
+
+    @Override
+    @Transactional
+    public Semillero guardarPestanaOds(
+            Long idSemillero, Long idCoordinador,
+            Long idAreaOcde, String subAreaOcde,
+            Long idOdsPrincipal, String observacionesFinales) {
+
+        Semillero semillero = obtenerYValidar(idSemillero, idCoordinador);
+
+        if (idAreaOcde == null) {
+            throw new CamposObligatoriosPendientesException("ODS", List.of("areaOcde"));
+        }
+        if (idOdsPrincipal == null) {
+            throw new CamposObligatoriosPendientesException("ODS", List.of("odsPrincipal"));
+        }
+
+        odsRepositoryPort.guardarOds(idSemillero, idAreaOcde, subAreaOcde,
+                idOdsPrincipal, observacionesFinales);
+
+        return actualizarEstadoPestana(semillero, "ODS");
+    }
+
+    private Semillero actualizarEstadoPestana(Semillero semillero, String pestana) {
+        String estadoActual = semillero.getEstadoCaracterizacion();
+        String marcador     = pestana + "_COMPLETADO";
+
+        String nuevoEstado;
+        if (estadoActual == null || estadoActual.isBlank()) {
+            nuevoEstado = marcador;
+        } else if (estadoActual.contains(marcador)) {
+            nuevoEstado = estadoActual; // ya estaba marcada, no duplicar
+        } else {
+            nuevoEstado = estadoActual + "," + marcador;
+        }
+
+        Semillero actualizado = semillero
+                .withEstadoCaracterizacion(nuevoEstado)
+                .withFechaActualizacion(LocalDateTime.now());
+
+        return semilleroRepositoryPort.guardar(actualizado);
+    }
+
+    @Override
+    @Transactional
+    public Semillero finalizarCaracterizacion(Long idSemillero, Long idCoordinador) {
+        Semillero semillero = obtenerYValidar(idSemillero, idCoordinador);
+
+        String estado = semillero.getEstadoCaracterizacion();
+
+        List<String> pestanasObligatorias = List.of(
+                "GENERAL", "PRODUCCION", "ORGANIZACION",
+                "ACTIVIDADES", "DOFA", "ODS"
+        );
+
+        List<String> faltantes = pestanasObligatorias.stream()
+                .filter(p -> estado == null || !estado.contains(p + "_COMPLETADO"))
+                .map(p -> "Pestaña " + p + " incompleta")
+                .toList();
+
+        if (!faltantes.isEmpty()) {
+            throw new CamposObligatoriosPendientesException("Finalización", faltantes);
+        }
+
+        Semillero finalizado = semillero
+                .withEstado(Semillero.EstadoSemillero.ACTIVO)
+                .withEstadoCaracterizacion("COMPLETO")
+                .withFechaActualizacion(LocalDateTime.now());
+
+        Semillero guardado = semilleroRepositoryPort.guardar(finalizado);
+        notificacionEmailPort.notificarFinalizacionCaracterizacion(guardado, correoAdministrador);
+        return guardado;
+    }
+
+    private Semillero obtenerYValidar(Long idSemillero, Long idCoordinador) {
+        Semillero semillero = semilleroRepositoryPort.buscarPorId(idSemillero)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Semillero", idSemillero));
+        validarPropiedadDelCoordinador(semillero, idCoordinador);
+        return semillero;
     }
 }

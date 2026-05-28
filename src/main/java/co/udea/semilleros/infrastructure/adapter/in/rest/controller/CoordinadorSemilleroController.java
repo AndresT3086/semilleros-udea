@@ -2,7 +2,8 @@ package co.udea.semilleros.infrastructure.adapter.in.rest.controller;
 
 import co.udea.semilleros.domain.model.Semillero;
 import co.udea.semilleros.domain.port.in.GestionarSemilleroUseCase;
-import co.udea.semilleros.infrastructure.adapter.in.rest.dto.request.GuardarPestanaGeneralRequest;
+import co.udea.semilleros.domain.port.out.ActividadesRepositoryPort;
+import co.udea.semilleros.infrastructure.adapter.in.rest.dto.request.*;
 import co.udea.semilleros.infrastructure.adapter.in.rest.dto.response.ApiResponse;
 import co.udea.semilleros.infrastructure.adapter.in.rest.dto.response.SemilleroDetalleResponse;
 import co.udea.semilleros.infrastructure.adapter.in.rest.mapper.SemilleroRestMapper;
@@ -135,5 +136,120 @@ public class CoordinadorSemilleroController {
         return ResponseEntity.ok(ApiResponse.exito(
                 "Semillero caracterizado exitosamente. Se ha notificado al administrador.",
                 semilleroRestMapper.toDetalleResponse(finalizado)));
+    }
+
+    @PatchMapping("/{idSemillero}/pestana/produccion")
+    @Operation(
+            summary = "Guardar pestaña Producción Académica",
+            description = "Guarda la información de producción académica del semillero.")
+    public ResponseEntity<ApiResponse<SemilleroDetalleResponse>> guardarProduccion(
+            @PathVariable Long idSemillero,
+            @Valid @RequestBody GuardarPestanaProduccionRequest request,
+            @AuthenticationPrincipal CoordinadorPrincipal principal) {
+
+        Semillero guardado = gestionarSemilleroUseCase.guardarPestanaProduccion(
+                idSemillero, principal.getId(),
+                request.getTienenArticulos(),          request.getCantidadArticulos(),
+                request.getTienenLibros(),             request.getCantidadLibros(),
+                request.getOrganizanEventos(),         request.getCantidadEventosOrganizados(),
+                request.getParticipaEnEventos(),       request.getCantidadParticipaciones()
+        );
+
+        return ResponseEntity.ok(ApiResponse.exito(
+                "Pestaña Producción guardada.",
+                semilleroRestMapper.toDetalleResponse(guardado)));
+    }
+
+    @PatchMapping("/{idSemillero}/pestana/organizacion")
+    @Operation(summary = "Guardar pestaña Organización",
+            description = "Guarda recursos y fuentes de financiación. Ambos campos son obligatorios.")
+    public ResponseEntity<ApiResponse<SemilleroDetalleResponse>> guardarOrganizacion(
+            @PathVariable Long idSemillero,
+            @Valid @RequestBody GuardarPestanaOrganizacionRequest request,
+            @AuthenticationPrincipal CoordinadorPrincipal principal) {
+
+        Semillero guardado = gestionarSemilleroUseCase.guardarPestanaOrganizacion(
+                idSemillero, principal.getId(),
+                request.getIdsRecursos(), request.getIdsFuentesFinanciacion());
+
+        return ResponseEntity.ok(ApiResponse.exito(
+                "Pestaña Organización guardada.", semilleroRestMapper.toDetalleResponse(guardado)));
+    }
+
+    @PatchMapping("/{idSemillero}/pestana/relacionamiento")
+    @Operation(summary = "Guardar pestaña Relacionamiento")
+    public ResponseEntity<ApiResponse<SemilleroDetalleResponse>> guardarRelacionamiento(
+            @PathVariable Long idSemillero,
+            @RequestBody GuardarPestanaRelacionamientoRequest request,
+            @AuthenticationPrincipal CoordinadorPrincipal principal) {
+
+        Semillero guardado = gestionarSemilleroUseCase.guardarPestanaRelacionamiento(
+                idSemillero, principal.getId(),
+                request.getAdscritoGrupo(),
+                request.getGrupoInvestigacion(),    request.getRelacionGrupo(),
+                request.getCentroInvestigaciones(), request.getRelacionCentro(),
+                request.getDepartamento(),          request.getRelacionDepartamento(),
+                request.getFacultad(),              request.getRelacionFacultad()
+        );
+
+        return ResponseEntity.ok(ApiResponse.exito(
+                "Pestaña Relacionamiento guardada.",
+                semilleroRestMapper.toDetalleResponse(guardado)));
+    }
+
+    @PatchMapping("/{idSemillero}/pestana/actividades")
+    @Operation(summary = "Guardar pestaña Actividades",
+            description = "Guarda las actividades científicas que realiza el semillero (Sí/No por actividad).")
+    public ResponseEntity<ApiResponse<SemilleroDetalleResponse>> guardarActividades(
+            @PathVariable Long idSemillero,
+            @Valid @RequestBody GuardarPestanaActividadesRequest request,
+            @AuthenticationPrincipal CoordinadorPrincipal principal) {
+
+        List<ActividadesRepositoryPort.ActividadDto> dtos = request.getActividades().stream()
+                .map(a -> new ActividadesRepositoryPort.ActividadDto(a.getIdActividad(), a.getRealiza()))
+                .toList();
+
+        Semillero guardado = gestionarSemilleroUseCase
+                .guardarPestanaActividades(idSemillero, principal.getId(), dtos);
+
+        return ResponseEntity.ok(ApiResponse.exito(
+                "Pestaña Actividades guardada.", semilleroRestMapper.toDetalleResponse(guardado)));
+    }
+
+    @PatchMapping("/{idSemillero}/pestana/dofa")
+    @Operation(summary = "Guardar pestaña DOFA",
+            description = "Guarda el análisis DOFA. Los cuatro campos son obligatorios.")
+    public ResponseEntity<ApiResponse<SemilleroDetalleResponse>> guardarDofa(
+            @PathVariable Long idSemillero,
+            @Valid @RequestBody GuardarPestanaDofaRequest request,
+            @AuthenticationPrincipal CoordinadorPrincipal principal) {
+
+        Semillero guardado = gestionarSemilleroUseCase.guardarPestanaDofa(
+                idSemillero, principal.getId(),
+                request.getFortalezas(), request.getDebilidades(),
+                request.getOportunidades(), request.getAmenazas());
+
+        return ResponseEntity.ok(ApiResponse.exito(
+                "Pestaña DOFA guardada.", semilleroRestMapper.toDetalleResponse(guardado)));
+    }
+
+    @PatchMapping("/{idSemillero}/pestana/ods")
+    @Operation(summary = "Guardar pestaña ODS")
+    public ResponseEntity<ApiResponse<SemilleroDetalleResponse>> guardarOds(
+            @PathVariable Long idSemillero,
+            @Valid @RequestBody GuardarPestanaOdsRequest request,
+            @AuthenticationPrincipal CoordinadorPrincipal principal) {
+
+        Semillero guardado = gestionarSemilleroUseCase.guardarPestanaOds(
+                idSemillero, principal.getId(),
+                request.getIdAreaOcde(),
+                request.getSubAreaOcde(),
+                request.getIdOdsPrincipal(),
+                request.getObservacionesFinales()
+        );
+
+        return ResponseEntity.ok(ApiResponse.exito(
+                "Pestaña ODS guardada.",
+                semilleroRestMapper.toDetalleResponse(guardado)));
     }
 }

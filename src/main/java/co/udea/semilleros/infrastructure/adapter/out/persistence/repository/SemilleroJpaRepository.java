@@ -30,6 +30,7 @@ public interface SemilleroJpaRepository extends JpaRepository<SemilleroEntity, L
                     OR unaccent(lower(s.objetivo::text))      LIKE unaccent(lower('%' || :palabraClave || '%'))
                     OR unaccent(lower(s.mision::text))        LIKE unaccent(lower('%' || :palabraClave || '%'))
                     OR unaccent(lower(s.palabras_clave::text)) LIKE unaccent(lower('%' || :palabraClave || '%'))
+                    OR unaccent(lower(ua.nombre::text))         LIKE unaccent(lower('%' || :palabraClave || '%'))
               )
             ORDER BY s.nombre ASC
             """,
@@ -45,6 +46,7 @@ public interface SemilleroJpaRepository extends JpaRepository<SemilleroEntity, L
                     OR unaccent(lower(s.objetivo::text))      LIKE unaccent(lower('%' || :palabraClave || '%'))
                     OR unaccent(lower(s.mision::text))        LIKE unaccent(lower('%' || :palabraClave || '%'))
                     OR unaccent(lower(s.palabras_clave::text)) LIKE unaccent(lower('%' || :palabraClave || '%'))
+                    OR unaccent(lower(ua.nombre::text))         LIKE unaccent(lower('%' || :palabraClave || '%'))
               )
             """,
             nativeQuery = true

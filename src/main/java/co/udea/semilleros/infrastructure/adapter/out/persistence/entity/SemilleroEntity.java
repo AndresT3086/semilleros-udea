@@ -88,7 +88,17 @@ public class SemilleroEntity {
     @Column(name = "fecha_actualizacion")
     private LocalDateTime fechaActualizacion;
 
+    @Column(name = "subarea_ocde", length = 200)
+    private String subareaOcde;
+
+    @Column(name = "ods_principal")
+    private Long odsPrincipal;
+
+    @Column(name = "observaciones_finales", columnDefinition = "TEXT")
+    private String observacionesFinales;
+
     public enum EstadoSemilleroJpa {
         ACTIVO, INACTIVO, BORRADOR, CARACTERIZADO
     }
+
 }

@@ -3,6 +3,8 @@ package co.udea.semilleros.infrastructure.adapter.in.rest.dto.response;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.time.LocalDateTime;
+
 @Getter
 @Builder
 public class SemilleroDetalleResponse {
@@ -25,4 +27,7 @@ public class SemilleroDetalleResponse {
     private String estado;
     private Integer totalSemilleristas;
     private Integer totalActividadesCientificas;
+    private String estadoCaracterizacion;
+    private LocalDateTime fechaCreacion;
+    private LocalDateTime fechaActualizacion;
 }
