@@ -12,10 +12,11 @@ import java.util.List;
 @Repository
 public interface DofaJpaRepository extends JpaRepository<DofaEntity, Long> {
 
-    List<DofaEntity> findByIdSemillero(Long idSemillero);
 
-    // Cambia el metodo existente a:
+    @Query("SELECT d FROM DofaEntity d WHERE d.semillero.id = :idSemillero")
+    List<DofaEntity> findBySemilleroId(@Param("idSemillero") Long idSemillero);
+
     @Modifying
     @Query("DELETE FROM DofaEntity d WHERE d.semillero.id = :idSemillero")
-    void deleteByIdSemillero(@Param("idSemillero") Long idSemillero);
+    void deleteBySemilleroId(@Param("idSemillero") Long idSemillero);
 }

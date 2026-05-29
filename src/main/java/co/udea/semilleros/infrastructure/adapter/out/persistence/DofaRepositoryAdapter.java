@@ -20,7 +20,7 @@ public class DofaRepositoryAdapter  implements DofaRepositoryPort {
     @Override
     public void guardarDofa(Long idSemillero, String fortalezas, String debilidades,
                             String oportunidades, String amenazas) {
-        dofaJpaRepository.deleteByIdSemillero(idSemillero);
+        dofaJpaRepository.deleteBySemilleroId(idSemillero);
 
         List<DofaEntity> entidades = List.of(
                 DofaEntity.builder().semillero(semilleroJpaRepository.getReferenceById(idSemillero))
@@ -38,7 +38,7 @@ public class DofaRepositoryAdapter  implements DofaRepositoryPort {
 
     @Override
     public Optional<DofaDto> obtenerPorSemillero(Long idSemillero) {
-        List<DofaEntity> items = dofaJpaRepository.findByIdSemillero(idSemillero);
+        List<DofaEntity> items = dofaJpaRepository.findBySemilleroId(idSemillero);
 
         if (items.isEmpty()) return Optional.empty();
 
