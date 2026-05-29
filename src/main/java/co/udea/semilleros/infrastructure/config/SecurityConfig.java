@@ -1,10 +1,12 @@
 package co.udea.semilleros.infrastructure.config;
 
 import co.udea.semilleros.infrastructure.security.filter.JwtAuthenticationFilter;
+import co.udea.semilleros.infrastructure.security.filter.RateLimitFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -27,10 +29,24 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final RateLimitFilter rateLimitFilter;
+
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+                .headers(headers -> headers
+                        // Evita que el navegador detecte el tipo de contenido incorrectamente
+                        .contentTypeOptions(Customizer.withDefaults())
+                        // Evita que la página se cargue dentro de un iframe (clickjacking)
+                        .frameOptions(frame -> frame.deny())
+                        // Fuerza HTTPS en producción
+                        .httpStrictTransportSecurity(hsts -> hsts
+                                .includeSubDomains(true)
+                                .maxAgeInSeconds(31536000))
+                        // Evita inyección de scripts (XSS)
+                        .xssProtection(Customizer.withDefaults())
+                )
             .csrf(AbstractHttpConfigurer::disable)
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .sessionManagement(session ->
@@ -55,7 +71,8 @@ public class SecurityConfig {
                 // Todo lo demás requiere autenticación
                 .anyRequest().authenticated()
             )
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

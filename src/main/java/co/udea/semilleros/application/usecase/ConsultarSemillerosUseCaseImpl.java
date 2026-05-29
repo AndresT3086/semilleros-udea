@@ -6,6 +6,7 @@ import co.udea.semilleros.domain.model.Semillero;
 import co.udea.semilleros.domain.model.SemilleroFiltro;
 import co.udea.semilleros.domain.port.in.ConsultarSemillerosUseCase;
 import co.udea.semilleros.domain.port.out.SemilleroRepositoryPort;
+import org.springframework.cache.annotation.Cacheable;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,11 +19,13 @@ public class ConsultarSemillerosUseCaseImpl implements ConsultarSemillerosUseCas
     private final SemilleroRepositoryPort semilleroRepositoryPort;
 
     @Override
+    @Transactional(readOnly = true)
     public PageResult<Semillero> listarSemillerosActivos(SemilleroFiltro filtro) {
         return semilleroRepositoryPort.buscarActivos(filtro);
     }
 
     @Override
+    @Cacheable(value = "semillero-detalle", key = "#idSemillero")
     public Semillero obtenerDetalleSemillero(Long idSemillero) {
         return semilleroRepositoryPort.buscarPorId(idSemillero)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Semillero", idSemillero));

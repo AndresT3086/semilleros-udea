@@ -8,8 +8,10 @@ import co.udea.semilleros.domain.model.Inscripcion;
 import co.udea.semilleros.domain.model.Semillero;
 import co.udea.semilleros.domain.port.in.GestionarSemilleroUseCase;
 import co.udea.semilleros.domain.port.out.*;
+import co.udea.semilleros.infrastructure.config.InputSanitizer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +33,8 @@ public class GestionarSemilleroUseCaseImpl implements GestionarSemilleroUseCase 
     private final OdsRepositoryPort odsRepositoryPort;
     private final ActividadesRepositoryPort actividadesRepositoryPort;
     private final RelacionamientoRepositoryPort relacionamientoRepositoryPort;
+    private final InputSanitizer inputSanitizer;
+
 
     private static final String SEMILLERO = "Semillero";
 
@@ -71,6 +75,7 @@ public class GestionarSemilleroUseCaseImpl implements GestionarSemilleroUseCase 
 
     @Override
     @Transactional
+    @CacheEvict(value = "semillero-detalle", key = "#idSemillero")
     public Semillero guardarPestanaGeneral(Long idSemillero, Long idCoordinador, Semillero datos) {
         Semillero existente = semilleroRepositoryPort.buscarPorId(idSemillero)
                 .orElseThrow(() -> new RecursoNoEncontradoException(SEMILLERO, idSemillero));
@@ -87,14 +92,14 @@ public class GestionarSemilleroUseCaseImpl implements GestionarSemilleroUseCase 
         }
 
         Semillero actualizado = existente
-                .withNombre(datos.getNombre())
+                .withNombre(inputSanitizer.sanitizarCampoCorto(datos.getNombre()))
                 .withSiglas(datos.getSiglas())
                 .withCorreoSemillero(datos.getCorreoSemillero())
                 .withTelefono(datos.getTelefono())
                 .withAnioCreacion(datos.getAnioCreacion())
-                .withMision(datos.getMision())
-                .withVision(datos.getVision())
-                .withObjetivo(datos.getObjetivo())
+                .withMision(inputSanitizer.sanitizar(datos.getMision()))
+                .withVision(inputSanitizer.sanitizar(datos.getVision()))
+                .withObjetivo(inputSanitizer.sanitizar(datos.getObjetivo()))
                 .withLineasInvestigacion(datos.getLineasInvestigacion())
                 .withPalabrasClave(datos.getPalabrasClave())
                 .withGrupoInvestigacion(datos.getGrupoInvestigacion())
