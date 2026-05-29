@@ -4,8 +4,7 @@ import co.udea.semilleros.domain.model.Semillero;
 import co.udea.semilleros.domain.port.in.GestionarSemilleroUseCase;
 import co.udea.semilleros.domain.port.out.ActividadesRepositoryPort;
 import co.udea.semilleros.infrastructure.adapter.in.rest.dto.request.*;
-import co.udea.semilleros.infrastructure.adapter.in.rest.dto.response.ApiResponse;
-import co.udea.semilleros.infrastructure.adapter.in.rest.dto.response.SemilleroDetalleResponse;
+import co.udea.semilleros.infrastructure.adapter.in.rest.dto.response.*;
 import co.udea.semilleros.infrastructure.adapter.in.rest.mapper.SemilleroRestMapper;
 import co.udea.semilleros.infrastructure.security.filter.CoordinadorPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
@@ -251,5 +250,82 @@ public class CoordinadorSemilleroController {
         return ResponseEntity.ok(ApiResponse.exito(
                 "Pestaña ODS guardada.",
                 semilleroRestMapper.toDetalleResponse(guardado)));
+    }
+
+    @GetMapping("/{idSemillero}/pestana/general")
+    @Operation(summary = "Obtener datos de pestaña General")
+    public ResponseEntity<ApiResponse<PestanaGeneralResponse>> obtenerGeneral(
+            @PathVariable Long idSemillero,
+            @AuthenticationPrincipal CoordinadorPrincipal principal) {
+
+        return ResponseEntity.ok(ApiResponse.exito(
+                gestionarSemilleroUseCase.obtenerPestanaGeneral(
+                        idSemillero, principal.getId())));
+    }
+
+    @GetMapping("/{idSemillero}/pestana/produccion")
+    @Operation(summary = "Obtener datos de pestaña Producción")
+    public ResponseEntity<ApiResponse<PestanaProduccionResponse>> obtenerProduccion(
+            @PathVariable Long idSemillero,
+            @AuthenticationPrincipal CoordinadorPrincipal principal) {
+
+        return ResponseEntity.ok(ApiResponse.exito(
+                gestionarSemilleroUseCase.obtenerPestanaProduccion(
+                        idSemillero, principal.getId())));
+    }
+
+    @GetMapping("/{idSemillero}/pestana/organizacion")
+    @Operation(summary = "Obtener datos de pestaña Organización")
+    public ResponseEntity<ApiResponse<PestanaOrganizacionResponse>> obtenerOrganizacion(
+            @PathVariable Long idSemillero,
+            @AuthenticationPrincipal CoordinadorPrincipal principal) {
+
+        return ResponseEntity.ok(ApiResponse.exito(
+                gestionarSemilleroUseCase.obtenerPestanaOrganizacion(
+                        idSemillero, principal.getId())));
+    }
+
+    @GetMapping("/{idSemillero}/pestana/relacionamiento")
+    @Operation(summary = "Obtener datos de pestaña Relacionamiento")
+    public ResponseEntity<ApiResponse<PestanaRelacionamientoResponse>> obtenerRelacionamiento(
+            @PathVariable Long idSemillero,
+            @AuthenticationPrincipal CoordinadorPrincipal principal) {
+
+        return ResponseEntity.ok(ApiResponse.exito(
+                gestionarSemilleroUseCase.obtenerPestanaRelacionamiento(
+                        idSemillero, principal.getId())));
+    }
+
+    @GetMapping("/{idSemillero}/pestana/actividades")
+    @Operation(summary = "Obtener datos de pestaña Actividades")
+    public ResponseEntity<ApiResponse<PestanaActividadesResponse>> obtenerActividades(
+            @PathVariable Long idSemillero,
+            @AuthenticationPrincipal CoordinadorPrincipal principal) {
+
+        return ResponseEntity.ok(ApiResponse.exito(
+                gestionarSemilleroUseCase.obtenerPestanaActividades(
+                        idSemillero, principal.getId())));
+    }
+
+    @GetMapping("/{idSemillero}/pestana/dofa")
+    @Operation(summary = "Obtener datos de pestaña DOFA")
+    public ResponseEntity<ApiResponse<PestanaDofaResponse>> obtenerDofa(
+            @PathVariable Long idSemillero,
+            @AuthenticationPrincipal CoordinadorPrincipal principal) {
+
+        return ResponseEntity.ok(ApiResponse.exito(
+                gestionarSemilleroUseCase.obtenerPestanaDofa(
+                        idSemillero, principal.getId())));
+    }
+
+    @GetMapping("/{idSemillero}/pestana/ods")
+    @Operation(summary = "Obtener datos de pestaña ODS")
+    public ResponseEntity<ApiResponse<PestanaOdsResponse>> obtenerOds(
+            @PathVariable Long idSemillero,
+            @AuthenticationPrincipal CoordinadorPrincipal principal) {
+
+        return ResponseEntity.ok(ApiResponse.exito(
+                gestionarSemilleroUseCase.obtenerPestanaOds(
+                        idSemillero, principal.getId())));
     }
 }

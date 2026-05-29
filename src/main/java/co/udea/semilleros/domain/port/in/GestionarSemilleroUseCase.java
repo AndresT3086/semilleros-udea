@@ -3,11 +3,19 @@ package co.udea.semilleros.domain.port.in;
 import co.udea.semilleros.domain.model.Inscripcion;
 import co.udea.semilleros.domain.model.Semillero;
 import co.udea.semilleros.domain.port.out.ActividadesRepositoryPort;
-import co.udea.semilleros.domain.port.out.ProduccionAcademicaRepositoryPort;
+import co.udea.semilleros.infrastructure.adapter.in.rest.dto.response.*;
 
 import java.util.List;
 
 public interface GestionarSemilleroUseCase {
+
+    PestanaGeneralResponse       obtenerPestanaGeneral(Long idSemillero, Long idCoordinador);
+    PestanaProduccionResponse    obtenerPestanaProduccion(Long idSemillero, Long idCoordinador);
+    PestanaOrganizacionResponse  obtenerPestanaOrganizacion(Long idSemillero, Long idCoordinador);
+    PestanaRelacionamientoResponse obtenerPestanaRelacionamiento(Long idSemillero, Long idCoordinador);
+    PestanaActividadesResponse   obtenerPestanaActividades(Long idSemillero, Long idCoordinador);
+    PestanaDofaResponse          obtenerPestanaDofa(Long idSemillero, Long idCoordinador);
+    PestanaOdsResponse           obtenerPestanaOds(Long idSemillero, Long idCoordinador);
 
     Semillero crearSemilleroBorrador(Long idCoordinador);
 

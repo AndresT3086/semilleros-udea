@@ -7,6 +7,8 @@ import co.udea.semilleros.infrastructure.adapter.out.persistence.repository.Semi
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.Optional;
+
 @Component
 @RequiredArgsConstructor
 public class RelacionamientoRepositoryAdapter implements RelacionamientoRepositoryPort {
@@ -39,5 +41,18 @@ public class RelacionamientoRepositoryAdapter implements RelacionamientoReposito
         entity.setRelacionFacultad(relacionFacultad);
 
         relacionamientoJpaRepository.save(entity);
+    }
+
+    @Override
+    public Optional<RelacionamientoDto> obtenerPorSemillero(
+            Long idSemillero) {
+        return relacionamientoJpaRepository.findByIdSemillero(idSemillero)
+                .map(e -> new RelacionamientoRepositoryPort.RelacionamientoDto(
+                        e.getAdscritoGrupo(),
+                        e.getGrupoInvestigacion(), e.getRelacionGrupo(),
+                        e.getCentroInvestigaciones(), e.getRelacionCentro(),
+                        e.getDepartamento(), e.getRelacionDepartamento(),
+                        e.getFacultad(), e.getRelacionFacultad()
+                ));
     }
 }

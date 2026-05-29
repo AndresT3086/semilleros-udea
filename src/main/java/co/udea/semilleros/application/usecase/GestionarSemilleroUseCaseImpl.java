@@ -8,6 +8,7 @@ import co.udea.semilleros.domain.model.Inscripcion;
 import co.udea.semilleros.domain.model.Semillero;
 import co.udea.semilleros.domain.port.in.GestionarSemilleroUseCase;
 import co.udea.semilleros.domain.port.out.*;
+import co.udea.semilleros.infrastructure.adapter.in.rest.dto.response.*;
 import co.udea.semilleros.infrastructure.config.InputSanitizer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -34,7 +35,7 @@ public class GestionarSemilleroUseCaseImpl implements GestionarSemilleroUseCase 
     private final ActividadesRepositoryPort actividadesRepositoryPort;
     private final RelacionamientoRepositoryPort relacionamientoRepositoryPort;
     private final InputSanitizer inputSanitizer;
-
+    private final FiltrosRepositoryPort filtrosRepositoryPort;
 
     private static final String SEMILLERO = "Semillero";
 
@@ -420,5 +421,173 @@ public class GestionarSemilleroUseCaseImpl implements GestionarSemilleroUseCase 
                 .orElseThrow(() -> new RecursoNoEncontradoException("Semillero", idSemillero));
         validarPropiedadDelCoordinador(semillero, idCoordinador);
         return semillero;
+    }
+
+
+    @Override
+    @Transactional(readOnly = true)
+    public PestanaGeneralResponse obtenerPestanaGeneral(Long idSemillero, Long idCoordinador) {
+        Semillero s = obtenerYValidar(idSemillero, idCoordinador);
+        return PestanaGeneralResponse.builder()
+                .id(s.getId())
+                .codigo(s.getCodigo())
+                .nombre(s.getNombre())
+                .siglas(s.getSiglas())
+                .correoSemillero(s.getCorreoSemillero())
+                .telefono(s.getTelefono())
+                .anioCreacion(s.getAnioCreacion())
+                .mision(s.getMision())
+                .vision(s.getVision())
+                .objetivo(s.getObjetivo())
+                .lineasInvestigacion(s.getLineasInvestigacion())
+                .palabrasClave(s.getPalabrasClave())
+                .grupoInvestigacion(s.getGrupoInvestigacion())
+                .idUnidadAcademica(s.getIdUnidadAcademica())
+                .nombreUnidad(s.getNombreUnidad())
+                .idCampus(s.getIdCampus())
+                .nombreCampus(s.getNombreCampus())
+                .idAreaOcde(s.getIdAreaOcde())
+                .nombreAreaOcde(s.getNombreAreaOcde())
+                .estadoCaracterizacion(s.getEstadoCaracterizacion())
+                .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PestanaProduccionResponse obtenerPestanaProduccion(Long idSemillero, Long idCoordinador) {
+        obtenerYValidar(idSemillero, idCoordinador);
+
+        return produccionRepositoryPort.obtenerPorSemillero(idSemillero)
+                .map(d -> PestanaProduccionResponse.builder()
+                        .tienenArticulos(d.tienenArticulos())
+                        .cantidadArticulos(d.cantidadArticulos())
+                        .tienenLibros(d.tienenLibros())
+                        .cantidadLibros(d.cantidadLibros())
+                        .organizanEventos(d.organizanEventos())
+                        .cantidadEventos(d.cantidadEventos())
+                        .participaEnEventos(d.participaEnEventos())
+                        .cantidadParticipaciones(d.cantidadParticipaciones())
+                        .build())
+                .orElse(PestanaProduccionResponse.builder()
+                        .tienenArticulos(false).cantidadArticulos(0)
+                        .tienenLibros(false).cantidadLibros(0)
+                        .organizanEventos(false).cantidadEventos(0)
+                        .participaEnEventos(false).cantidadParticipaciones(0)
+                        .build());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PestanaOrganizacionResponse obtenerPestanaOrganizacion(
+            Long idSemillero, Long idCoordinador) {
+        obtenerYValidar(idSemillero, idCoordinador);
+
+        List<Long> idsRecursos = organizacionRepositoryPort
+                .obtenerIdsRecursosPorSemillero(idSemillero);
+        List<Long> idsFuentes  = organizacionRepositoryPort
+                .obtenerIdsFuentesPorSemillero(idSemillero);
+
+        List<FiltroItemResponse> todosRecursos = filtrosRepositoryPort
+                .listarTodosLosRecursos().stream()
+                .map(r -> FiltroItemResponse.builder()
+                        .id(r.id()).nombre(r.nombre()).build())
+                .toList();
+
+        List<FiltroItemResponse> todasFuentes = filtrosRepositoryPort
+                .listarTodasLasFuentes().stream()
+                .map(f -> FiltroItemResponse.builder()
+                        .id(f.id()).nombre(f.nombre()).build())
+                .toList();
+
+        List<FiltroItemResponse> recursosSeleccionados = todosRecursos.stream()
+                .filter(r -> idsRecursos.contains(r.getId()))
+                .toList();
+
+        List<FiltroItemResponse> fuentesSeleccionadas = todasFuentes.stream()
+                .filter(f -> idsFuentes.contains(f.getId()))
+                .toList();
+
+        return PestanaOrganizacionResponse.builder()
+                .recursosSeleccionados(recursosSeleccionados)
+                .fuentesSeleccionadas(fuentesSeleccionadas)
+                .todosLosRecursos(todosRecursos)
+                .todasLasFuentes(todasFuentes)
+                .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PestanaRelacionamientoResponse obtenerPestanaRelacionamiento(
+            Long idSemillero, Long idCoordinador) {
+        obtenerYValidar(idSemillero, idCoordinador);
+
+        return relacionamientoRepositoryPort.obtenerPorSemillero(idSemillero)
+                .map(d -> PestanaRelacionamientoResponse.builder()
+                        .adscritoGrupo(d.adscritoGrupo())
+                        .grupoInvestigacion(d.grupoInvestigacion())
+                        .relacionGrupo(d.relacionGrupo())
+                        .centroInvestigaciones(d.centroInvestigaciones())
+                        .relacionCentro(d.relacionCentro())
+                        .departamento(d.departamento())
+                        .relacionDepartamento(d.relacionDepartamento())
+                        .facultad(d.facultad())
+                        .relacionFacultad(d.relacionFacultad())
+                        .build())
+                .orElse(PestanaRelacionamientoResponse.builder()
+                        .adscritoGrupo(false).build());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PestanaActividadesResponse obtenerPestanaActividades(
+            Long idSemillero, Long idCoordinador) {
+        obtenerYValidar(idSemillero, idCoordinador);
+
+        List<PestanaActividadesResponse.ActividadItemResponse> actividades =
+                actividadesRepositoryPort.obtenerTodasConEstadoPorSemillero(idSemillero)
+                        .stream()
+                        .map(a -> PestanaActividadesResponse.ActividadItemResponse.builder()
+                                .idActividad(a.idActividad())
+                                .nombre(a.nombre())
+                                .categoria(a.categoria())
+                                .realiza(a.realiza())
+                                .build())
+                        .toList();
+
+        return PestanaActividadesResponse.builder()
+                .actividades(actividades)
+                .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PestanaDofaResponse obtenerPestanaDofa(Long idSemillero, Long idCoordinador) {
+        obtenerYValidar(idSemillero, idCoordinador);
+
+        return dofaRepositoryPort.obtenerPorSemillero(idSemillero)
+                .map(d -> PestanaDofaResponse.builder()
+                        .fortalezas(d.fortalezas())
+                        .debilidades(d.debilidades())
+                        .oportunidades(d.oportunidades())
+                        .amenazas(d.amenazas())
+                        .build())
+                .orElse(PestanaDofaResponse.builder().build());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PestanaOdsResponse obtenerPestanaOds(Long idSemillero, Long idCoordinador) {
+        obtenerYValidar(idSemillero, idCoordinador);
+
+        return odsRepositoryPort.obtenerPorSemillero(idSemillero)
+                .map(d -> PestanaOdsResponse.builder()
+                        .idAreaOcde(d.idAreaOcde())
+                        .nombreAreaOcde(d.nombreAreaOcde())
+                        .subAreaOcde(d.subAreaOcde())
+                        .idOdsPrincipal(d.idOdsPrincipal())
+                        .nombreOdsPrincipal(d.nombreOdsPrincipal())
+                        .observacionesFinales(d.observacionesFinales())
+                        .build())
+                .orElse(PestanaOdsResponse.builder().build());
     }
 }

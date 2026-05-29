@@ -14,4 +14,10 @@ public interface FiltrosRepositoryPort {
 
     List<Campus> listarTodosLosCampus();
 
+    List<RecursoDto>          listarTodosLosRecursos();
+    List<FuenteFinanciacionDto> listarTodasLasFuentes();
+
+    record RecursoDto(Long id, String nombre) {}
+    record FuenteFinanciacionDto(Long id, String nombre) {}
+
 }

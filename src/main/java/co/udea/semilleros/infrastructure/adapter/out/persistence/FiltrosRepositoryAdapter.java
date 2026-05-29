@@ -8,6 +8,7 @@ import co.udea.semilleros.infrastructure.adapter.out.persistence.repository.Area
 import co.udea.semilleros.infrastructure.adapter.out.persistence.repository.CampusJpaRepository;
 import co.udea.semilleros.infrastructure.adapter.out.persistence.repository.UnidadAcademicaJpaRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -19,6 +20,7 @@ public class FiltrosRepositoryAdapter implements FiltrosRepositoryPort {
     private final UnidadAcademicaJpaRepository unidadAcademicaJpaRepository;
     private final AreaOcdeJpaRepository areaOcdeJpaRepository;
     private final CampusJpaRepository campusJpaRepository;
+    private final JdbcTemplate jdbcTemplate;
 
     @Override
     public List<UnidadAcademica> listarTodasLasUnidades() {
@@ -54,5 +56,25 @@ public class FiltrosRepositoryAdapter implements FiltrosRepositoryPort {
                         .direccion(e.getDireccion())
                         .build())
                 .toList();
+    }
+
+    @Override
+    public List<FiltrosRepositoryPort.RecursoDto> listarTodosLosRecursos() {
+        return jdbcTemplate.query(
+                "SELECT id_recurso, nombre FROM recurso ORDER BY nombre",
+                (rs, rowNum) -> new FiltrosRepositoryPort.RecursoDto(
+                        rs.getLong("id_recurso"),
+                        rs.getString("nombre")
+                ));
+    }
+
+    @Override
+    public List<FiltrosRepositoryPort.FuenteFinanciacionDto> listarTodasLasFuentes() {
+        return jdbcTemplate.query(
+                "SELECT id_fuente, nombre FROM fuente_financiacion ORDER BY nombre",
+                (rs, rowNum) -> new FiltrosRepositoryPort.FuenteFinanciacionDto(
+                        rs.getLong("id_fuente"),
+                        rs.getString("nombre")
+                ));
     }
 }

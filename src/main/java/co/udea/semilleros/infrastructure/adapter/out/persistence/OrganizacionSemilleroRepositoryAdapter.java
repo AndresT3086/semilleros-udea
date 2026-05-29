@@ -33,4 +33,18 @@ public class OrganizacionSemilleroRepositoryAdapter implements OrganizacionSemil
                     idSemillero, idFuente);
         }
     }
+
+    @Override
+    public List<Long> obtenerIdsRecursosPorSemillero(Long idSemillero) {
+        return jdbcTemplate.queryForList(
+                "SELECT id_recurso FROM semillero_recurso WHERE id_semillero = ?",
+                Long.class, idSemillero);
+    }
+
+    @Override
+    public List<Long> obtenerIdsFuentesPorSemillero(Long idSemillero) {
+        return jdbcTemplate.queryForList(
+                "SELECT id_fuente FROM semillero_financiacion WHERE id_semillero = ?",
+                Long.class, idSemillero);
+    }
 }

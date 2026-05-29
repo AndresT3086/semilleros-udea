@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
@@ -33,5 +34,28 @@ public class DofaRepositoryAdapter  implements DofaRepositoryPort {
         );
 
         dofaJpaRepository.saveAll(entidades);
+    }
+
+    @Override
+    public Optional<DofaDto> obtenerPorSemillero(Long idSemillero) {
+        List<DofaEntity> items = dofaJpaRepository.findByIdSemillero(idSemillero);
+
+        if (items.isEmpty()) return Optional.empty();
+
+        String fortalezas    = extraer(items, "FORTALEZA");
+        String debilidades   = extraer(items, "DEBILIDAD");
+        String oportunidades = extraer(items, "OPORTUNIDAD");
+        String amenazas      = extraer(items, "AMENAZA");
+
+        return Optional.of(new DofaRepositoryPort.DofaDto(
+                fortalezas, debilidades, oportunidades, amenazas));
+    }
+
+    private String extraer(List<DofaEntity> items, String tipo) {
+        return items.stream()
+                .filter(d -> tipo.equals(d.getTipo()))
+                .map(DofaEntity::getDescripcion)
+                .findFirst()
+                .orElse(null);
     }
 }

@@ -24,4 +24,25 @@ public class ActividadesRepositoryAdapter implements ActividadesRepositoryPort {
                 """, idSemillero, dto.idActividad(), dto.realiza());
         }
     }
+
+    @Override
+    public List<ActividadesRepositoryPort.ActividadDetalleDto> obtenerTodasConEstadoPorSemillero(
+            Long idSemillero) {
+        return jdbcTemplate.query("""
+            SELECT ac.id_actividad, ac.nombre, ac.categoria,
+                   COALESCE(sa.realiza, false) AS realiza
+            FROM actividad_cientifica ac
+            LEFT JOIN semillero_actividad sa
+                   ON sa.id_actividad = ac.id_actividad
+                  AND sa.id_semillero = ?
+            ORDER BY ac.categoria, ac.nombre
+            """,
+                (rs, rowNum) -> new ActividadesRepositoryPort.ActividadDetalleDto(
+                        rs.getLong("id_actividad"),
+                        rs.getString("nombre"),
+                        rs.getString("categoria"),
+                        rs.getBoolean("realiza")
+                ),
+                idSemillero);
+    }
 }
