@@ -107,6 +107,9 @@ class InscribirseASemilleroUseCaseImplTest {
                 .correo("juan.perez@gmail.com")
                 .build();
 
+        when(semilleroRepositoryPort.buscarPorId(1L))
+                .thenReturn(Optional.of(Semillero.builder().id(1L).nombre("Semillero IA").build()));
+
         // ACT & ASSERT
         assertThatThrownBy(() -> useCase.inscribir(request))
                 .isInstanceOf(DominioCorreoNoPermitidoException.class)
@@ -123,6 +126,9 @@ class InscribirseASemilleroUseCaseImplTest {
                 .idSemillero(1L)
                 .correo(null)
                 .build();
+
+        when(semilleroRepositoryPort.buscarPorId(1L))
+                .thenReturn(Optional.of(Semillero.builder().id(1L).nombre("Semillero IA").build()));
 
         // ACT & ASSERT
         assertThatThrownBy(() -> useCase.inscribir(request))
