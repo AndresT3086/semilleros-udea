@@ -3,8 +3,16 @@ package co.udea.semilleros.infrastructure.adapter.out.email;
 import co.udea.semilleros.domain.model.Inscripcion;
 import co.udea.semilleros.domain.model.Semillero;
 import co.udea.semilleros.domain.port.out.NotificacionEmailPort;
+import com.sendgrid.Method;
+import com.sendgrid.Request;
+import com.sendgrid.Response;
+import com.sendgrid.SendGrid;
+import com.sendgrid.helpers.mail.Mail;
+import com.sendgrid.helpers.mail.objects.Content;
+import com.sendgrid.helpers.mail.objects.Email;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.scheduling.annotation.Async;
@@ -12,88 +20,204 @@ import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class NotificacionEmailAdapter implements NotificacionEmailPort {
 
-    private final JavaMailSender mailSender;
+
+    @Value("${app.mail.sendgrid.api-key:}")
+    private String sendGridApiKey;
+
+    @Value("${app.mail.from:noreply@udea.edu.co}")
+    private String mailFrom;
+
+    @Value("${app.mail.from-name:Sistema de Semilleros UdeA}")
+    private String mailFromName;
 
     @Async
     @Override
     public void notificarNuevaInscripcion(Inscripcion inscripcion, String correoCoordinador) {
-        try {
-            SimpleMailMessage mensaje = new SimpleMailMessage();
-            mensaje.setTo(correoCoordinador);
-            mensaje.setSubject("Nueva solicitud de inscripción - " + inscripcion.getNombreSemillero());
-            mensaje.setText(construirCuerpoInscripcion(inscripcion));
-            mailSender.send(mensaje);
-            log.info("Notificación de inscripción enviada al coordinador: {}", correoCoordinador);
-        } catch (Exception e) {
-            log.error("Error al enviar notificación de inscripción al coordinador {}: {}",
-                    correoCoordinador, e.getMessage());
-        }
+        String asunto = "Nueva solicitud de inscripción — " + inscripcion.getNombreSemillero();
+        String cuerpo = construirCuerpoInscripcion(inscripcion);
+
+        enviarCorreo(correoCoordinador, asunto, cuerpo);
     }
 
     @Async
     @Override
     public void notificarFinalizacionCaracterizacion(Semillero semillero, String correoAdministrador) {
+        String asunto = "Semillero caracterizado — " + semillero.getNombre();
+        String cuerpo = construirCuerpoCaracterizacion(semillero);
+
+        enviarCorreo(correoAdministrador, asunto, cuerpo);
+    }
+
+    private void enviarCorreo(String destinatario, String asunto, String cuerpo) {
+        if (sendGridApiKey == null || sendGridApiKey.isBlank()) {
+            log.warn("SendGrid API Key no configurada. Correo NO enviado a: {}", destinatario);
+            return;
+        }
+
         try {
-            SimpleMailMessage mensaje = new SimpleMailMessage();
-            mensaje.setTo(correoAdministrador);
-            mensaje.setSubject("Semillero caracterizado - " + semillero.getNombre());
-            mensaje.setText(construirCuerpoCaracterizacion(semillero));
-            mailSender.send(mensaje);
-            log.info("Notificación de caracterización enviada al administrador: {}", correoAdministrador);
+            Email from    = new Email(mailFrom, mailFromName);
+            Email to      = new Email(destinatario);
+            Content content = new Content("text/html", cuerpo);
+            Mail mail     = new Mail(from, asunto, to, content);
+
+            SendGrid sg      = new SendGrid(sendGridApiKey);
+            Request request  = new Request();
+            request.setMethod(Method.POST);
+            request.setEndpoint("mail/send");
+            request.setBody(mail.build());
+
+            Response response = sg.api(request);
+
+            if (response.getStatusCode() >= 200 && response.getStatusCode() < 300) {
+                log.info("Correo enviado exitosamente a: {} | Status: {}",
+                        destinatario, response.getStatusCode());
+            } else {
+                log.error("Error al enviar correo a: {} | Status: {} | Body: {}",
+                        destinatario, response.getStatusCode(), response.getBody());
+            }
+
         } catch (Exception e) {
-            log.error("Error al enviar notificación de caracterización al administrador {}: {}",
-                    correoAdministrador, e.getMessage());
+            log.error("Excepción al enviar correo a {}: {}", destinatario, e.getMessage());
         }
     }
 
     private String construirCuerpoInscripcion(Inscripcion inscripcion) {
-        return String.format("""
-                Estimado/a coordinador/a,
+        return """
+                <!DOCTYPE html>
+                <html lang="es">
+                <head><meta charset="UTF-8"></head>
+                <body style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto;">
                 
-                Ha recibido una nueva solicitud de inscripción para el semillero "%s".
+                  <div style="background-color: #3d5a1e; padding: 20px; text-align: center;">
+                    <h1 style="color: white; margin: 0; font-size: 20px;">
+                      Sistema de Semilleros de Investigación
+                    </h1>
+                    <p style="color: #cde; margin: 5px 0 0 0; font-size: 14px;">
+                      Universidad de Antioquia
+                    </p>
+                  </div>
                 
-                Datos del estudiante:
-                - Nombre: %s %s
-                - Correo: %s
-                - Cédula: %s
-                - Teléfono: %s
-                - Programa: %s
-                - Semestre: %s
+                  <div style="padding: 30px 20px;">
+                    <h2 style="color: #3d5a1e; font-size: 18px;">
+                      Nueva solicitud de inscripción
+                    </h2>
+                    <p>Estimado/a coordinador/a,</p>
+                    <p>
+                      Ha recibido una nueva solicitud de ingreso al semillero
+                      <strong>%s</strong>.
+                    </p>
                 
-                Motivación:
-                %s
+                    <div style="background: #f5f5f5; border-left: 4px solid #3d5a1e;
+                                padding: 15px 20px; margin: 20px 0; border-radius: 4px;">
+                      <h3 style="margin: 0 0 12px 0; color: #3d5a1e; font-size: 15px;">
+                        Datos del estudiante
+                      </h3>
+                      <table style="width: 100%%; border-collapse: collapse; font-size: 14px;">
+                        <tr>
+                          <td style="padding: 4px 8px; font-weight: bold; width: 140px;">Nombre:</td>
+                          <td style="padding: 4px 8px;">%s %s</td>
+                        </tr>
+                        <tr style="background:#ebebeb;">
+                          <td style="padding: 4px 8px; font-weight: bold;">Correo:</td>
+                          <td style="padding: 4px 8px;">%s</td>
+                        </tr>
+                        <tr>
+                          <td style="padding: 4px 8px; font-weight: bold;">Cédula:</td>
+                          <td style="padding: 4px 8px;">%s</td>
+                        </tr>
+                        <tr style="background:#ebebeb;">
+                          <td style="padding: 4px 8px; font-weight: bold;">Teléfono:</td>
+                          <td style="padding: 4px 8px;">%s</td>
+                        </tr>
+                        <tr>
+                          <td style="padding: 4px 8px; font-weight: bold;">Programa:</td>
+                          <td style="padding: 4px 8px;">%s</td>
+                        </tr>
+                        <tr style="background:#ebebeb;">
+                          <td style="padding: 4px 8px; font-weight: bold;">Semestre:</td>
+                          <td style="padding: 4px 8px;">%s</td>
+                        </tr>
+                      </table>
+                    </div>
                 
-                Por favor ingrese al sistema para revisar y gestionar esta solicitud.
+                    <div style="background: #fff8e1; border-left: 4px solid #f9a825;
+                                padding: 15px 20px; margin: 20px 0; border-radius: 4px;">
+                      <h3 style="margin: 0 0 8px 0; font-size: 14px; color: #555;">
+                        Motivación del estudiante
+                      </h3>
+                      <p style="margin: 0; font-size: 14px; color: #444;">%s</p>
+                    </div>
                 
-                Sistema de Semilleros - Universidad de Antioquia
-                """,
+                    <p style="font-size: 14px;">
+                      Por favor ingrese al sistema para revisar y gestionar esta solicitud.
+                      La solicitud quedó en estado <strong>PENDIENTE</strong>.
+                    </p>
+                  </div>
+                
+                  <div style="background: #f0f0f0; padding: 15px 20px; text-align: center;
+                              font-size: 12px; color: #777;">
+                    Sistema de Semilleros — Universidad de Antioquia<br>
+                    Este es un mensaje automático, por favor no responder a este correo.
+                  </div>
+                
+                </body>
+                </html>
+                """.formatted(
                 inscripcion.getNombreSemillero(),
                 inscripcion.getNombres(),
                 inscripcion.getApellidos(),
                 inscripcion.getCorreo(),
                 inscripcion.getCedula(),
                 inscripcion.getTelefono(),
-                inscripcion.getPrograma(),
-                inscripcion.getSemestre(),
-                inscripcion.getMotivacion()
+                valorODefecto(inscripcion.getPrograma()),
+                valorODefecto(inscripcion.getSemestre()),
+                valorODefecto(inscripcion.getMotivacion())
         );
     }
 
     private String construirCuerpoCaracterizacion(Semillero semillero) {
-        return String.format("""
-                Estimado/a administrador/a,
+        return """
+                <!DOCTYPE html>
+                <html lang="es">
+                <head><meta charset="UTF-8"></head>
+                <body style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto;">
                 
-                El semillero "%s" (código: %s) ha completado su proceso de caracterización.
+                  <div style="background-color: #3d5a1e; padding: 20px; text-align: center;">
+                    <h1 style="color: white; margin: 0; font-size: 20px;">
+                      Sistema de Semilleros de Investigación
+                    </h1>
+                    <p style="color: #cde; margin: 5px 0 0 0; font-size: 14px;">
+                      Universidad de Antioquia
+                    </p>
+                  </div>
                 
-                Por favor ingrese al sistema para revisar y aprobar la información registrada.
+                  <div style="padding: 30px 20px;">
+                    <h2 style="color: #3d5a1e;">Semillero caracterizado</h2>
+                    <p>Estimado/a administrador/a,</p>
+                    <p>
+                      El semillero <strong>%s</strong> (código: <strong>%s</strong>)
+                      ha completado su proceso de caracterización y está listo para revisión.
+                    </p>
+                    <p>Por favor ingrese al sistema para revisar y aprobar la información registrada.</p>
+                  </div>
                 
-                Sistema de Semilleros - Universidad de Antioquia
-                """,
+                  <div style="background: #f0f0f0; padding: 15px 20px; text-align: center;
+                              font-size: 12px; color: #777;">
+                    Sistema de Semilleros — Universidad de Antioquia<br>
+                    Este es un mensaje automático, por favor no responder a este correo.
+                  </div>
+                
+                </body>
+                </html>
+                """.formatted(
                 semillero.getNombre(),
                 semillero.getCodigo()
         );
+    }
+
+    private String valorODefecto(String valor) {
+        return (valor != null && !valor.isBlank()) ? valor : "No especificado";
     }
 }
