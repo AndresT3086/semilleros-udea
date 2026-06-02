@@ -4,8 +4,8 @@ import co.udea.semilleros.domain.exception.AccesoNoAutorizadoException;
 import co.udea.semilleros.domain.exception.CamposObligatoriosPendientesException;
 import co.udea.semilleros.domain.exception.RecursoNoEncontradoException;
 import co.udea.semilleros.domain.model.Semillero;
-import co.udea.semilleros.domain.port.out.NotificacionEmailPort;
-import co.udea.semilleros.domain.port.out.SemilleroRepositoryPort;
+import co.udea.semilleros.domain.port.out.*;
+import co.udea.semilleros.infrastructure.config.InputSanitizer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -30,7 +30,27 @@ class GestionarSemilleroUseCaseImplTest {
     @Mock
     private SemilleroRepositoryPort semilleroRepositoryPort;
     @Mock
+    private InscripcionRepositoryPort inscripcionRepositoryPort;
+    @Mock
+    private SemilleroIntegranteRepositoryPort semilleroIntegranteRepositoryPort;
+    @Mock
     private NotificacionEmailPort notificacionEmailPort;
+    @Mock
+    private ProduccionAcademicaRepositoryPort produccionRepositoryPort;
+    @Mock
+    private OrganizacionSemilleroRepositoryPort organizacionRepositoryPort;
+    @Mock
+    private DofaRepositoryPort dofaRepositoryPort;
+    @Mock
+    private OdsRepositoryPort odsRepositoryPort;
+    @Mock
+    private ActividadesRepositoryPort actividadesRepositoryPort;
+    @Mock
+    private RelacionamientoRepositoryPort relacionamientoRepositoryPort;
+    @Mock
+    private InputSanitizer inputSanitizer;
+    @Mock
+    private FiltrosRepositoryPort filtrosRepositoryPort;
 
     @InjectMocks
     private GestionarSemilleroUseCaseImpl useCase;
@@ -75,6 +95,10 @@ class GestionarSemilleroUseCaseImplTest {
 
         when(semilleroRepositoryPort.buscarPorId(idSemillero)).thenReturn(Optional.of(existente));
         when(semilleroRepositoryPort.existePorNombre("Semillero de Robótica")).thenReturn(false);
+        when(inputSanitizer.sanitizarCampoCorto("Semillero de Robótica")).thenReturn("Semillero de Robótica");
+        when(inputSanitizer.sanitizar("Misión del semillero")).thenReturn("Misión del semillero");
+        when(inputSanitizer.sanitizar("Visión del semillero")).thenReturn("Visión del semillero");
+        when(inputSanitizer.sanitizar("Objetivo del semillero")).thenReturn("Objetivo del semillero");
         when(semilleroRepositoryPort.guardar(any())).thenReturn(guardado);
 
         // ACT
@@ -145,11 +169,12 @@ class GestionarSemilleroUseCaseImplTest {
                 .nombre("Semillero IA")
                 .codigo("SEM-UDEA-0001")
                 .estado(Semillero.EstadoSemillero.ACTIVO)
+                .estadoCaracterizacion("GENERAL_COMPLETADO,PRODUCCION_COMPLETADO,ORGANIZACION_COMPLETADO,ACTIVIDADES_COMPLETADO,DOFA_COMPLETADO,ODS_COMPLETADO")
                 .idCoordinador(idCoordinador)
                 .build();
 
         Semillero finalizado = semillero
-                .withEstado(Semillero.EstadoSemillero.CARACTERIZADO)
+                .withEstado(Semillero.EstadoSemillero.ACTIVO)
                 .withEstadoCaracterizacion("COMPLETO");
 
         when(semilleroRepositoryPort.buscarPorId(idSemillero)).thenReturn(Optional.of(semillero));
@@ -159,7 +184,8 @@ class GestionarSemilleroUseCaseImplTest {
         Semillero resultado = useCase.finalizarCaracterizacion(idSemillero, idCoordinador);
 
         // ASSERT
-        assertThat(resultado.getEstado()).isEqualTo(Semillero.EstadoSemillero.CARACTERIZADO);
+        assertThat(resultado.getEstado()).isEqualTo(Semillero.EstadoSemillero.ACTIVO);
+        assertThat(resultado.getEstadoCaracterizacion()).isEqualTo("COMPLETO");
         verify(notificacionEmailPort).notificarFinalizacionCaracterizacion(any(), any());
     }
 

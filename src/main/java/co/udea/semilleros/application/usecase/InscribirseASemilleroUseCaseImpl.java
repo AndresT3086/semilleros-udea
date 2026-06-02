@@ -1,5 +1,6 @@
 package co.udea.semilleros.application.usecase;
 
+import co.udea.semilleros.domain.exception.DominioCorreoNoPermitidoException;
 import co.udea.semilleros.domain.exception.InscripcionDuplicadaException;
 import co.udea.semilleros.domain.exception.RecursoNoEncontradoException;
 import co.udea.semilleros.domain.model.Inscripcion;
@@ -35,9 +36,14 @@ public class InscribirseASemilleroUseCaseImpl implements InscribirseASemilleroUs
         Semillero semillero = semilleroRepositoryPort.buscarPorId(inscripcion.getIdSemillero())
                 .orElseThrow(() -> new RecursoNoEncontradoException("Semillero", inscripcion.getIdSemillero()));
 
+        String correo = inscripcion.getCorreo();
+        if (correo == null || !correo.toLowerCase().endsWith(dominioPermitido)) {
+            throw new DominioCorreoNoPermitidoException(correo);
+        }
+
         if (inscripcionRepositoryPort.existeInscripcionActivaPorCorreoYSemillero(
-                inscripcion.getCorreo(), inscripcion.getIdSemillero())) {
-            throw new InscripcionDuplicadaException(inscripcion.getCorreo(), inscripcion.getIdSemillero());
+                correo, inscripcion.getIdSemillero())) {
+            throw new InscripcionDuplicadaException(correo, inscripcion.getIdSemillero());
         }
 
         Inscripcion nueva = inscripcion.withEstado(Inscripcion.EstadoInscripcion.PENDIENTE)

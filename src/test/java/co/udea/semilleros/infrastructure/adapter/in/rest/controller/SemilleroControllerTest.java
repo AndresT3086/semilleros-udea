@@ -4,14 +4,16 @@ import co.udea.semilleros.domain.exception.RecursoNoEncontradoException;
 import co.udea.semilleros.domain.model.PageResult;
 import co.udea.semilleros.domain.model.Semillero;
 import co.udea.semilleros.domain.port.in.ConsultarSemillerosUseCase;
+import co.udea.semilleros.infrastructure.adapter.in.rest.dto.response.PageResponse;
+import co.udea.semilleros.infrastructure.adapter.in.rest.dto.response.SemilleroDetalleResponse;
+import co.udea.semilleros.infrastructure.adapter.in.rest.dto.response.SemilleroResumenResponse;
 import co.udea.semilleros.infrastructure.adapter.in.rest.mapper.SemilleroRestMapper;
 import co.udea.semilleros.infrastructure.config.GlobalExceptionHandler;
-import co.udea.semilleros.infrastructure.config.SecurityConfig;
-import co.udea.semilleros.infrastructure.security.filter.JwtAuthenticationFilter;
 import co.udea.semilleros.infrastructure.security.jwt.JwtTokenProvider;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
@@ -27,7 +29,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(SemilleroController.class)
-@Import({GlobalExceptionHandler.class, SecurityConfig.class})
+@AutoConfigureMockMvc(addFilters = false)
+@Import(GlobalExceptionHandler.class)
 @DisplayName("SemilleroController - Pruebas de integración de capa web")
 class SemilleroControllerTest {
 
@@ -39,9 +42,6 @@ class SemilleroControllerTest {
 
     @MockBean
     private SemilleroRestMapper semilleroRestMapper;
-
-    @MockBean
-    private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @MockBean
     private JwtTokenProvider jwtTokenProvider;
@@ -67,9 +67,22 @@ class SemilleroControllerTest {
                 .esUltimaPagina(true)
                 .esPrimeraPagina(true)
                 .build();
+        PageResponse<SemilleroResumenResponse> pageResponse = PageResponse.<SemilleroResumenResponse>builder()
+                .contenido(List.of(SemilleroResumenResponse.builder()
+                        .id(1L)
+                        .nombre("Semillero IA")
+                        .estado("ACTIVO")
+                        .build()))
+                .paginaActual(0)
+                .tamano(15)
+                .totalElementos(1L)
+                .totalPaginas(1)
+                .esUltimaPagina(true)
+                .esPrimeraPagina(true)
+                .build();
 
         when(consultarSemillerosUseCase.listarSemillerosActivos(any())).thenReturn(pageResult);
-        when(semilleroRestMapper.toPageResponse(any())).thenCallRealMethod();
+        when(semilleroRestMapper.toPageResponse(pageResult)).thenReturn(pageResponse);
 
         // ACT & ASSERT
         mockMvc.perform(get("/api/v1/semilleros")
@@ -90,7 +103,11 @@ class SemilleroControllerTest {
                 .build();
 
         when(consultarSemillerosUseCase.obtenerDetalleSemillero(idSemillero)).thenReturn(semillero);
-        when(semilleroRestMapper.toDetalleResponse(any())).thenCallRealMethod();
+        when(semilleroRestMapper.toDetalleResponse(semillero)).thenReturn(SemilleroDetalleResponse.builder()
+                .id(idSemillero)
+                .nombre("Semillero Biotecnología")
+                .estado("ACTIVO")
+                .build());
 
         // ACT & ASSERT
         mockMvc.perform(get("/api/v1/semilleros/{id}", idSemillero)
@@ -124,9 +141,18 @@ class SemilleroControllerTest {
                 .paginaActual(0).tamano(15).totalElementos(0L).totalPaginas(0)
                 .esUltimaPagina(true).esPrimeraPagina(true)
                 .build();
+        PageResponse<SemilleroResumenResponse> pageResponse = PageResponse.<SemilleroResumenResponse>builder()
+                .contenido(List.of())
+                .paginaActual(0)
+                .tamano(15)
+                .totalElementos(0L)
+                .totalPaginas(0)
+                .esUltimaPagina(true)
+                .esPrimeraPagina(true)
+                .build();
 
         when(consultarSemillerosUseCase.listarSemillerosActivos(any())).thenReturn(pageResult);
-        when(semilleroRestMapper.toPageResponse(any())).thenCallRealMethod();
+        when(semilleroRestMapper.toPageResponse(pageResult)).thenReturn(pageResponse);
 
         // ACT & ASSERT
         mockMvc.perform(get("/api/v1/semilleros")
