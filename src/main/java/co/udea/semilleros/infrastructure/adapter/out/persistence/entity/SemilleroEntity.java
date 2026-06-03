@@ -61,7 +61,7 @@ public class SemilleroEntity {
     @Enumerated(EnumType.STRING)
     private EstadoSemilleroJpa estado;
 
-    @Column(name = "estado_caracterizacion", length = 50)
+    @Column(name = "estado_caracterizacion", length = 255)
     private String estadoCaracterizacion;
 
     @ManyToOne(fetch = FetchType.LAZY)
