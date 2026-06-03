@@ -107,10 +107,9 @@ public class GestionarSemilleroUseCaseImpl implements GestionarSemilleroUseCase 
                 .withIdUnidadAcademica(datos.getIdUnidadAcademica())
                 .withIdCampus(datos.getIdCampus())
                 .withIdAreaOcde(datos.getIdAreaOcde())
-                .withEstadoCaracterizacion("GENERAL_COMPLETADO")
                 .withFechaActualizacion(LocalDateTime.now());
 
-        return semilleroRepositoryPort.guardar(actualizado);
+        return actualizarEstadoPestana(actualizado, "GENERAL");
     }
 
     @Override
@@ -288,6 +287,22 @@ public class GestionarSemilleroUseCaseImpl implements GestionarSemilleroUseCase 
 
         Semillero semillero = obtenerYValidar(idSemillero, idCoordinador);
 
+        if (Boolean.TRUE.equals(adscritoGrupo)) {
+            List<String> faltantes = new java.util.ArrayList<>();
+            if (grupoInvestigacion == null || grupoInvestigacion.isBlank()) {
+                faltantes.add("grupoInvestigacion");
+            }
+            if (relacionGrupo == null || relacionGrupo.isBlank()) {
+                faltantes.add("relacionGrupo");
+            }
+            if (!faltantes.isEmpty()) {
+                throw new CamposObligatoriosPendientesException("Relacionamiento", faltantes);
+            }
+        } else {
+            grupoInvestigacion = null;
+            relacionGrupo = null;
+        }
+
         relacionamientoRepositoryPort.guardarRelacionamiento(
                 idSemillero,
                 adscritoGrupo,
@@ -370,7 +385,9 @@ public class GestionarSemilleroUseCaseImpl implements GestionarSemilleroUseCase 
         String marcador     = pestana + "_COMPLETADO";
 
         String nuevoEstado;
-        if (estadoActual == null || estadoActual.isBlank()) {
+        if ("COMPLETO".equals(estadoActual)) {
+            nuevoEstado = estadoActual;
+        } else if (estadoActual == null || estadoActual.isBlank()) {
             nuevoEstado = marcador;
         } else if (estadoActual.contains(marcador)) {
             nuevoEstado = estadoActual; // ya estaba marcada, no duplicar

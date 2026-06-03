@@ -21,6 +21,7 @@ public interface SemilleroJpaRepository extends JpaRepository<SemilleroEntity, L
             LEFT JOIN campus            c  ON c.id_campus  = s.id_campus
             LEFT JOIN area_ocde         ao ON ao.id_area   = s.id_area_ocde
             WHERE s.estado = 'ACTIVO'
+              AND s.estado_caracterizacion = 'COMPLETO'
               AND (:idUnidad    IS NULL OR s.id_unidad_academica = :idUnidad)
               AND (:idCampus    IS NULL OR s.id_campus           = :idCampus)
               AND (:idArea      IS NULL OR s.id_area_ocde        = :idArea)
@@ -36,7 +37,9 @@ public interface SemilleroJpaRepository extends JpaRepository<SemilleroEntity, L
             """,
             countQuery = """
             SELECT COUNT(*) FROM semillero s
+            LEFT JOIN unidad_academica ua ON ua.id_unidad = s.id_unidad_academica
             WHERE s.estado = 'ACTIVO'
+              AND s.estado_caracterizacion = 'COMPLETO'
               AND (:idUnidad    IS NULL OR s.id_unidad_academica = :idUnidad)
               AND (:idCampus    IS NULL OR s.id_campus           = :idCampus)
               AND (:idArea      IS NULL OR s.id_area_ocde        = :idArea)
