@@ -10,15 +10,18 @@ import lombok.Setter;
 @NoArgsConstructor
 public class GuardarPestanaDofaRequest {
 
-    @NotBlank(message = "Las fortalezas son obligatorias")
+    private static final String MENSAJE_DOFA_OBLIGATORIO =
+            "Completa las cuatro áreas del análisis DOFA: fortalezas, debilidades, oportunidades y amenazas.";
+
+    @NotBlank(message = MENSAJE_DOFA_OBLIGATORIO)
     private String fortalezas;
 
-    @NotBlank(message = "Las debilidades son obligatorias")
+    @NotBlank(message = MENSAJE_DOFA_OBLIGATORIO)
     private String debilidades;
 
-    @NotBlank(message = "Las oportunidades son obligatorias")
+    @NotBlank(message = MENSAJE_DOFA_OBLIGATORIO)
     private String oportunidades;
 
-    @NotBlank(message = "Las amenazas son obligatorias")
+    @NotBlank(message = MENSAJE_DOFA_OBLIGATORIO)
     private String amenazas;
 }
