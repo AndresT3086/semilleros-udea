@@ -14,6 +14,7 @@ public class GuardarPestanaGeneralRequest {
     @Size(max = 300, message = "El nombre no puede superar los 300 caracteres")
     private String nombre;
 
+    @NotBlank(message = "Las siglas son obligatorias")
     @Size(max = 30, message = "Las siglas no pueden superar los 30 caracteres")
     private String siglas;
 
@@ -21,9 +22,11 @@ public class GuardarPestanaGeneralRequest {
     @Email(message = "El correo del semillero no tiene un formato válido")
     private String correoSemillero;
 
+    @NotBlank(message = "El teléfono es obligatorio")
     @Size(max = 20, message = "El teléfono no puede superar los 20 caracteres")
     private String telefono;
 
+    @NotNull(message = "El año de creación es obligatorio")
     @Min(value = 1900, message = "El año de creación debe ser mayor a 1900")
     @Max(value = 2100, message = "El año de creación no es válido")
     private Integer anioCreacion;
@@ -37,11 +40,14 @@ public class GuardarPestanaGeneralRequest {
     @NotBlank(message = "El objetivo es obligatorio")
     private String objetivo;
 
+    @NotBlank(message = "Las líneas de investigación son obligatorias")
     private String lineasInvestigacion;
 
+    @NotBlank(message = "Las palabras clave son obligatorias")
     @Size(max = 500, message = "Las palabras clave no pueden superar los 500 caracteres")
     private String palabrasClave;
 
+    @NotBlank(message = "El grupo de investigación es obligatorio")
     @Size(max = 200, message = "El grupo de investigación no puede superar los 200 caracteres")
     private String grupoInvestigacion;
 

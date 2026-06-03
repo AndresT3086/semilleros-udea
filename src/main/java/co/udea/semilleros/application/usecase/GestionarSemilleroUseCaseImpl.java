@@ -138,10 +138,16 @@ public class GestionarSemilleroUseCaseImpl implements GestionarSemilleroUseCase 
         List<String> faltantes = new ArrayList<>();
 
         if (datos.getNombre() == null || datos.getNombre().isBlank()) faltantes.add("nombre");
+        if (datos.getSiglas() == null || datos.getSiglas().isBlank()) faltantes.add("siglas");
         if (datos.getCorreoSemillero() == null || datos.getCorreoSemillero().isBlank()) faltantes.add("correoSemillero");
+        if (datos.getTelefono() == null || datos.getTelefono().isBlank()) faltantes.add("telefono");
+        if (datos.getAnioCreacion() == null) faltantes.add("anioCreacion");
         if (datos.getMision() == null || datos.getMision().isBlank()) faltantes.add("mision");
         if (datos.getVision() == null || datos.getVision().isBlank()) faltantes.add("vision");
         if (datos.getObjetivo() == null || datos.getObjetivo().isBlank()) faltantes.add("objetivo");
+        if (datos.getLineasInvestigacion() == null || datos.getLineasInvestigacion().isBlank()) faltantes.add("lineasInvestigacion");
+        if (datos.getPalabrasClave() == null || datos.getPalabrasClave().isBlank()) faltantes.add("palabrasClave");
+        if (datos.getGrupoInvestigacion() == null || datos.getGrupoInvestigacion().isBlank()) faltantes.add("grupoInvestigacion");
         if (datos.getIdUnidadAcademica() == null) faltantes.add("unidadAcademica");
         if (datos.getIdCampus() == null) faltantes.add("campus");
         if (datos.getIdAreaOcde() == null) faltantes.add("areaOcde");
