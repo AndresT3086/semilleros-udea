@@ -3,6 +3,7 @@ package co.udea.semilleros.application.usecase;
 import co.udea.semilleros.domain.exception.AccesoNoAutorizadoException;
 import co.udea.semilleros.domain.exception.CamposObligatoriosPendientesException;
 import co.udea.semilleros.domain.exception.RecursoNoEncontradoException;
+import co.udea.semilleros.domain.model.Inscripcion;
 import co.udea.semilleros.domain.model.Semillero;
 import co.udea.semilleros.domain.port.out.*;
 import co.udea.semilleros.infrastructure.config.InputSanitizer;
@@ -15,11 +16,13 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -200,5 +203,111 @@ class GestionarSemilleroUseCaseImplTest {
         assertThatThrownBy(() -> useCase.finalizarCaracterizacion(idInexistente, 1L))
                 .isInstanceOf(RecursoNoEncontradoException.class)
                 .hasMessageContaining("999");
+    }
+
+    // ─── gestión de inscripciones ─────────────────────────────────────────────
+
+    @Test
+    @DisplayName("listarInscripcionesPendientes: debe retornar solicitudes del semillero del coordinador")
+    void listarInscripcionesPendientes_conSemilleroPropio_retornaPendientes() {
+        // ARRANGE
+        Long idSemillero = 1L;
+        Long idCoordinador = 1L;
+
+        Semillero semillero = Semillero.builder()
+                .id(idSemillero)
+                .idCoordinador(idCoordinador)
+                .build();
+        Inscripcion inscripcion = crearInscripcion(idSemillero)
+                .withEstado(Inscripcion.EstadoInscripcion.PENDIENTE);
+
+        when(semilleroRepositoryPort.buscarPorId(idSemillero)).thenReturn(Optional.of(semillero));
+        when(inscripcionRepositoryPort.buscarPorSemilleroYEstado(
+                idSemillero, Inscripcion.EstadoInscripcion.PENDIENTE))
+                .thenReturn(List.of(inscripcion));
+
+        // ACT
+        List<Inscripcion> resultado = useCase.listarInscripcionesPendientes(idSemillero, idCoordinador);
+
+        // ASSERT
+        assertThat(resultado).hasSize(1);
+        assertThat(resultado.get(0).getEstado()).isEqualTo(Inscripcion.EstadoInscripcion.PENDIENTE);
+    }
+
+    @Test
+    @DisplayName("aprobarInscripcion: debe aprobar y registrar integrante")
+    void aprobarInscripcion_conSolicitudValida_apruebaYRegistraIntegrante() {
+        // ARRANGE
+        Long idInscripcion = 10L;
+        Long idSemillero = 1L;
+        Long idCoordinador = 1L;
+
+        Inscripcion pendiente = crearInscripcion(idSemillero)
+                .withId(idInscripcion)
+                .withEstado(Inscripcion.EstadoInscripcion.PENDIENTE);
+        Semillero semillero = Semillero.builder()
+                .id(idSemillero)
+                .idCoordinador(idCoordinador)
+                .build();
+        Inscripcion aprobada = pendiente.withEstado(Inscripcion.EstadoInscripcion.APROBADO);
+
+        when(inscripcionRepositoryPort.buscarPorId(idInscripcion)).thenReturn(Optional.of(pendiente));
+        when(semilleroRepositoryPort.buscarPorId(idSemillero)).thenReturn(Optional.of(semillero));
+        when(inscripcionRepositoryPort.guardar(any())).thenReturn(aprobada);
+
+        // ACT
+        Inscripcion resultado = useCase.aprobarInscripcion(idInscripcion, idCoordinador);
+
+        // ASSERT
+        assertThat(resultado.getEstado()).isEqualTo(Inscripcion.EstadoInscripcion.APROBADO);
+        verify(inscripcionRepositoryPort).guardar(any());
+        verify(semilleroIntegranteRepositoryPort).registrarIntegrante(
+                eq(idSemillero), eq("Ana"), eq("Pérez"), eq("12345678"),
+                eq("ana@example.com"), eq("ESTUDIANTE"));
+    }
+
+    @Test
+    @DisplayName("rechazarInscripcion: debe marcar la solicitud como rechazada")
+    void rechazarInscripcion_conSolicitudValida_rechazaSolicitud() {
+        // ARRANGE
+        Long idInscripcion = 10L;
+        Long idSemillero = 1L;
+        Long idCoordinador = 1L;
+
+        Inscripcion pendiente = crearInscripcion(idSemillero)
+                .withId(idInscripcion)
+                .withEstado(Inscripcion.EstadoInscripcion.PENDIENTE);
+        Semillero semillero = Semillero.builder()
+                .id(idSemillero)
+                .idCoordinador(idCoordinador)
+                .build();
+        Inscripcion rechazada = pendiente.withEstado(Inscripcion.EstadoInscripcion.RECHAZADO);
+
+        when(inscripcionRepositoryPort.buscarPorId(idInscripcion)).thenReturn(Optional.of(pendiente));
+        when(semilleroRepositoryPort.buscarPorId(idSemillero)).thenReturn(Optional.of(semillero));
+        when(inscripcionRepositoryPort.guardar(any())).thenReturn(rechazada);
+
+        // ACT
+        Inscripcion resultado = useCase.rechazarInscripcion(idInscripcion, idCoordinador);
+
+        // ASSERT
+        assertThat(resultado.getEstado()).isEqualTo(Inscripcion.EstadoInscripcion.RECHAZADO);
+        verify(inscripcionRepositoryPort).guardar(any());
+    }
+
+    private Inscripcion crearInscripcion(Long idSemillero) {
+        return Inscripcion.builder()
+                .idSemillero(idSemillero)
+                .nombreSemillero("Semillero IA")
+                .nombres("Ana")
+                .apellidos("Pérez")
+                .cedula("12345678")
+                .correo("ana@example.com")
+                .telefono("3001234567")
+                .programa("Ingeniería de Sistemas")
+                .semestre("6")
+                .motivacion("Quiero participar en actividades de investigación aplicada.")
+                .aceptaTerminos(true)
+                .build();
     }
 }

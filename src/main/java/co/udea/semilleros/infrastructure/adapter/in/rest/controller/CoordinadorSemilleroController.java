@@ -88,6 +88,54 @@ public class CoordinadorSemilleroController {
         return ResponseEntity.ok(ApiResponse.exito(semilleroRestMapper.toDetalleResponse(semillero)));
     }
 
+    @GetMapping("/{idSemillero}/inscripciones/pendientes")
+    @Operation(
+            summary = "Listar solicitudes pendientes",
+            description = "Retorna las solicitudes de inscripción pendientes de un semillero del coordinador autenticado."
+    )
+    public ResponseEntity<ApiResponse<List<InscripcionResponse>>> listarInscripcionesPendientes(
+            @PathVariable Long idSemillero,
+            @AuthenticationPrincipal CoordinadorPrincipal principal
+    ) {
+        List<InscripcionResponse> response = gestionarSemilleroUseCase
+                .listarInscripcionesPendientes(idSemillero, principal.getId())
+                .stream()
+                .map(semilleroRestMapper::toInscripcionResponse)
+                .toList();
+
+        return ResponseEntity.ok(ApiResponse.exito(response));
+    }
+
+    @PostMapping("/inscripciones/{idInscripcion}/aprobar")
+    @Operation(
+            summary = "Aprobar solicitud de inscripción",
+            description = "Aprueba una solicitud pendiente y registra al estudiante como integrante del semillero."
+    )
+    public ResponseEntity<ApiResponse<InscripcionResponse>> aprobarInscripcion(
+            @PathVariable Long idInscripcion,
+            @AuthenticationPrincipal CoordinadorPrincipal principal
+    ) {
+        return ResponseEntity.ok(ApiResponse.exito(
+                "Solicitud aprobada exitosamente.",
+                semilleroRestMapper.toInscripcionResponse(
+                        gestionarSemilleroUseCase.aprobarInscripcion(idInscripcion, principal.getId()))));
+    }
+
+    @PostMapping("/inscripciones/{idInscripcion}/rechazar")
+    @Operation(
+            summary = "Rechazar solicitud de inscripción",
+            description = "Rechaza una solicitud pendiente de inscripción al semillero."
+    )
+    public ResponseEntity<ApiResponse<InscripcionResponse>> rechazarInscripcion(
+            @PathVariable Long idInscripcion,
+            @AuthenticationPrincipal CoordinadorPrincipal principal
+    ) {
+        return ResponseEntity.ok(ApiResponse.exito(
+                "Solicitud rechazada exitosamente.",
+                semilleroRestMapper.toInscripcionResponse(
+                        gestionarSemilleroUseCase.rechazarInscripcion(idInscripcion, principal.getId()))));
+    }
+
     @PatchMapping("/{idSemillero}/pestana/general")
     @Operation(
         summary = "Guardar pestaña General del formulario",

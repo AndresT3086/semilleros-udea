@@ -13,7 +13,12 @@ public class InscripcionResponse {
     private String nombreSemillero;
     private String nombres;
     private String apellidos;
+    private String cedula;
     private String correo;
+    private String telefono;
+    private String programa;
+    private String semestre;
+    private String motivacion;
     private String estado;
     private LocalDateTime fechaInscripcion;
 }
