@@ -1,6 +1,5 @@
 package co.udea.semilleros.application.usecase;
 
-import co.udea.semilleros.domain.exception.DominioCorreoNoPermitidoException;
 import co.udea.semilleros.domain.exception.InscripcionDuplicadaException;
 import co.udea.semilleros.domain.exception.RecursoNoEncontradoException;
 import co.udea.semilleros.domain.model.Coordinador;
@@ -17,7 +16,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Optional;
 
@@ -44,16 +42,11 @@ class InscribirseASemilleroUseCaseImplTest {
     @InjectMocks
     private InscribirseASemilleroUseCaseImpl useCase;
 
-    @BeforeEach
-    void setUp() {
-        ReflectionTestUtils.setField(useCase, "dominioPermitido", "@udea.edu.co");
-    }
-
     // ─── inscribir - casos exitosos ────────────────────────────────────────────
 
     @Test
-    @DisplayName("inscribir: debe guardar inscripción con estado PENDIENTE para correo institucional válido")
-    void inscribir_conCorreoInstitucional_guardaConEstadoPendiente() {
+    @DisplayName("inscribir: debe guardar inscripción con estado PENDIENTE para correo válido")
+    void inscribir_conCorreoValido_guardaConEstadoPendiente() {
         // ARRANGE
         Inscripcion request = Inscripcion.builder()
                 .idSemillero(1L)
@@ -96,43 +89,48 @@ class InscribirseASemilleroUseCaseImplTest {
         verify(notificacionEmailPort).notificarNuevaInscripcion(any(), any());
     }
 
-    // ─── inscribir - dominio de correo ─────────────────────────────────────────
-
     @Test
-    @DisplayName("inscribir: debe lanzar DominioCorreoNoPermitidoException para correo no institucional")
-    void inscribir_conCorreoNoInstitucional_lanzaExcepcion() {
+    @DisplayName("inscribir: debe permitir correo no institucional")
+    void inscribir_conCorreoNoInstitucional_guardaConEstadoPendiente() {
         // ARRANGE
         Inscripcion request = Inscripcion.builder()
                 .idSemillero(1L)
+                .nombres("Juan")
+                .apellidos("Pérez")
+                .cedula("1040123456")
                 .correo("juan.perez@gmail.com")
+                .telefono("3001234567")
+                .aceptaTerminos(true)
                 .build();
 
-        when(semilleroRepositoryPort.buscarPorId(1L))
-                .thenReturn(Optional.of(Semillero.builder().id(1L).nombre("Semillero IA").build()));
-
-        // ACT & ASSERT
-        assertThatThrownBy(() -> useCase.inscribir(request))
-                .isInstanceOf(DominioCorreoNoPermitidoException.class)
-                .hasMessageContaining("gmail.com");
-
-        verify(inscripcionRepositoryPort, never()).guardar(any());
-    }
-
-    @Test
-    @DisplayName("inscribir: debe lanzar DominioCorreoNoPermitidoException para correo nulo")
-    void inscribir_conCorreoNulo_lanzaExcepcion() {
-        // ARRANGE
-        Inscripcion request = Inscripcion.builder()
-                .idSemillero(1L)
-                .correo(null)
+        Semillero semillero = Semillero.builder()
+                .id(1L)
+                .nombre("Semillero IA")
+                .idCoordinador(10L)
                 .build();
 
-        when(semilleroRepositoryPort.buscarPorId(1L))
-                .thenReturn(Optional.of(Semillero.builder().id(1L).nombre("Semillero IA").build()));
+        Coordinador coordinador = Coordinador.builder()
+                .id(10L)
+                .correo("coordinador@udea.edu.co")
+                .build();
 
-        // ACT & ASSERT
-        assertThatThrownBy(() -> useCase.inscribir(request))
-                .isInstanceOf(DominioCorreoNoPermitidoException.class);
+        Inscripcion guardada = request
+                .withEstado(Inscripcion.EstadoInscripcion.PENDIENTE)
+                .withNombreSemillero("Semillero IA");
+
+        when(semilleroRepositoryPort.buscarPorId(1L))
+                .thenReturn(Optional.of(semillero));
+        when(inscripcionRepositoryPort.existeInscripcionActivaPorCorreoYSemillero(any(), any())).thenReturn(false);
+        when(inscripcionRepositoryPort.guardar(any())).thenReturn(guardada);
+        when(coordinadorRepositoryPort.buscarPorId(10L)).thenReturn(Optional.of(coordinador));
+
+        // ACT
+        Inscripcion resultado = useCase.inscribir(request);
+
+        // ASSERT
+        assertThat(resultado.getEstado()).isEqualTo(Inscripcion.EstadoInscripcion.PENDIENTE);
+        assertThat(resultado.getCorreo()).isEqualTo("juan.perez@gmail.com");
+        verify(inscripcionRepositoryPort).guardar(any());
     }
 
     // ─── inscribir - semillero no encontrado ───────────────────────────────────
