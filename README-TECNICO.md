@@ -37,27 +37,39 @@ src/main/java/co/udea/semilleros/
 │       │   ├── ConsultarSemillerosUseCase.java
 │       │   ├── InscribirseASemilleroUseCase.java
 │       │   ├── AutenticarCoordinadorUseCase.java
-│       │   ├── GestionarSemilleroUseCase.java
+│       │   ├── GestionarSemilleroUseCase.java     ← Creación, pestañas y finalización
 │       │   └── ConsultarFiltrosUseCase.java
 │       └── out/                     ← Puertos secundarios (contratos de repositorios/servicios)
 │           ├── SemilleroRepositoryPort.java
 │           ├── InscripcionRepositoryPort.java
 │           ├── CoordinadorRepositoryPort.java
 │           ├── FiltrosRepositoryPort.java
-│           └── NotificacionEmailPort.java
+│           ├── NotificacionEmailPort.java
+│           ├── SemilleroIntegranteRepositoryPort.java  ← Pestañas de caracterización (Sprint 3)
+│           ├── ProduccionAcademicaRepositoryPort.java
+│           ├── OrganizacionSemilleroRepositoryPort.java
+│           ├── RelacionamientoRepositoryPort.java
+│           ├── ActividadesRepositoryPort.java
+│           ├── DofaRepositoryPort.java
+│           └── OdsRepositoryPort.java
 │
 ├── application/                     ← CAPA DE APLICACIÓN (orquestación)
 │   └── usecase/                     ← Implementaciones de los casos de uso
 │       ├── ConsultarSemillerosUseCaseImpl.java
 │       ├── InscribirseASemilleroUseCaseImpl.java
 │       ├── AutenticarCoordinadorUseCaseImpl.java
-│       ├── GestionarSemilleroUseCaseImpl.java
+│       ├── GestionarSemilleroUseCaseImpl.java     ← Borrador, 7 pestañas, finalización, inscripciones
 │       └── ConsultarFiltrosUseCaseImpl.java
 │
 └── infrastructure/                  ← CAPA DE INFRAESTRUCTURA
     ├── adapter/
     │   ├── in/rest/                 ← Adaptadores de entrada (HTTP)
     │   │   ├── controller/          ← REST Controllers con Swagger
+    │   │   │   ├── SemilleroController.java          (público)
+    │   │   │   ├── InscripcionController.java        (público)
+    │   │   │   ├── FiltrosController.java             (público)
+    │   │   │   ├── AuthController.java                (público)
+    │   │   │   └── CoordinadorSemilleroController.java (protegido, borrador + 7 pestañas)
     │   │   ├── dto/
     │   │   │   ├── request/         ← DTOs de entrada con Bean Validation
     │   │   │   └── response/        ← DTOs de salida
@@ -66,17 +78,32 @@ src/main/java/co/udea/semilleros/
     │       ├── persistence/         ← Adaptadores de salida (JPA)
     │       │   ├── entity/          ← Entidades JPA
     │       │   ├── mapper/          ← MapStruct: Entity ↔ Domain
-    │       │   └── repository/      ← Repositorios JPA (interfaces)
-    │       └── email/               ← Adaptador de correo electrónico
+    │       │   ├── repository/      ← Repositorios JPA (interfaces)
+    │       │   ├── SemilleroRepositoryAdapter.java
+    │       │   ├── InscripcionRepositoryAdapter.java
+    │       │   ├── CoordinadorRepositoryAdapter.java
+    │       │   ├── FiltrosRepositoryAdapter.java
+    │       │   ├── SemilleroIntegranteRepositoryAdapter.java
+    │       │   ├── ProduccionAcademicaRepositoryAdapter.java
+    │       │   ├── OrganizacionSemilleroRepositoryAdapter.java
+    │       │   ├── RelacionamientoRepositoryAdapter.java
+    │       │   ├── ActividadesRepositoryAdapter.java
+    │       │   ├── DofaRepositoryAdapter.java
+    │       │   └── OdsRepositoryAdapter.java
+    │       └── email/               ← Adaptador de correo (SendGrid + Spring Mail)
+    │           └── NotificacionEmailAdapter.java
     ├── config/
     │   ├── SecurityConfig.java      ← Configuración Spring Security
     │   ├── OpenApiConfig.java       ← Configuración Swagger
+    │   ├── CacheConfig.java         ← Caché de filtros (Spring Cache)
+    │   ├── InputSanitizer.java      ← Sanitización de campos de texto libre
     │   └── GlobalExceptionHandler.java ← Manejo global de excepciones
     └── security/
         ├── jwt/
         │   └── JwtTokenProvider.java
         └── filter/
             ├── JwtAuthenticationFilter.java
+            ├── RateLimitFilter.java  ← Rate limiting con Bucket4j
             └── CoordinadorPrincipal.java
 ```
 
@@ -241,6 +268,9 @@ open http://localhost:8025
 | V1 | `V1__crear_tablas_base.sql` | Todas las tablas, constraints, índices |
 | V2 | `V2__datos_referencia.sql` | Campus, facultades, ODS, OCDE, recursos |
 | V3 | `V3__datos_ejemplo.sql` | Coordinadores y semilleros de prueba |
+| V4 | `V4__extensiones.sql` | Extensiones de PostgreSQL requeridas |
+| V5 | `V5__alter_semillero_nombre_nullable.sql` | Permite nombre nulo en semilleros (borradores) |
+| V6 | `V6__actualizar_produccion_y_nuevas_tablas.sql` | Tablas de las pestañas de caracterización (Sprint 3) |
 
 Para agregar una nueva migración:
 
