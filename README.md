@@ -155,6 +155,9 @@ mvn spring-boot:run -Pdev
 | `POST` | `/api/v1/coordinador/semilleros/iniciar` | Crear borrador de semillero |
 | `GET` | `/api/v1/coordinador/semilleros/mis-semilleros` | Ver semilleros del coordinador |
 | `GET` | `/api/v1/coordinador/semilleros/{id}` | Detalle de un semillero del coordinador |
+| `GET` | `/api/v1/coordinador/semilleros/{id}/inscripciones/pendientes` | Listar solicitudes de inscripción pendientes |
+| `POST` | `/api/v1/coordinador/semilleros/inscripciones/{idInscripcion}/aprobar` | Aprobar solicitud de inscripción |
+| `POST` | `/api/v1/coordinador/semilleros/inscripciones/{idInscripcion}/rechazar` | Rechazar solicitud de inscripción |
 | `POST` | `/api/v1/coordinador/semilleros/{id}/finalizar` | Finalizar caracterización |
 | `GET`/`PATCH` | `/api/v1/coordinador/semilleros/{id}/pestana/general` | Consultar / guardar pestaña General |
 | `GET`/`PATCH` | `/api/v1/coordinador/semilleros/{id}/pestana/produccion` | Consultar / guardar pestaña Producción Académica |
