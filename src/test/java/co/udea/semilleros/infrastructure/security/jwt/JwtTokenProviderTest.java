@@ -12,7 +12,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @DisplayName("JwtTokenProvider - Pruebas unitarias")
 class JwtTokenProviderTest {
 
-    private static final String SECRETO = "una-clave-secreta-de-prueba-con-mas-de-32-caracteres";
+    // No es un secreto real: clave dummy generada en el momento solo para las pruebas,
+    // con la longitud mínima que exige HS256 (evita falsos positivos de escaneo de secretos).
+    private static final String SECRETO = "clave-dummy-de-test-".repeat(3);
 
     private JwtTokenProvider jwtTokenProvider;
 
@@ -59,7 +61,7 @@ class JwtTokenProviderTest {
     void esTokenValido_conFirmaDistinta_retornaFalse() {
         // ARRANGE: mismo token, pero provider con otra clave secreta
         JwtTokenProvider otroProvider = new JwtTokenProvider();
-        ReflectionTestUtils.setField(otroProvider, "jwtSecret", "otra-clave-secreta-totalmente-distinta-32chars");
+        ReflectionTestUtils.setField(otroProvider, "jwtSecret", "otra-clave-dummy-".repeat(3));
         ReflectionTestUtils.setField(otroProvider, "jwtExpirationMs", 86400000L);
         otroProvider.init();
 

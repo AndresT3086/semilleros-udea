@@ -63,7 +63,7 @@ class AuthControllerTest {
         when(jwtTokenProvider.extraerIdCoordinador(token)).thenReturn(5L);
 
         String body = """
-                {"correo":"coordinador@udea.edu.co","password":"UdeA2024*","respuestaMath":7,"operando1":3,"operando2":4}
+                {"correo":"coordinador@udea.edu.co","password":"clave-de-prueba-no-real","respuestaMath":7,"operando1":3,"operando2":4}
                 """;
 
         // ACT & ASSERT
@@ -83,7 +83,7 @@ class AuthControllerTest {
                 .thenThrow(new CredencialesInvalidasException());
 
         String body = """
-                {"correo":"coordinador@udea.edu.co","password":"malaClave","respuestaMath":7,"operando1":3,"operando2":4}
+                {"correo":"coordinador@udea.edu.co","password":"clave-erronea-de-prueba","respuestaMath":7,"operando1":3,"operando2":4}
                 """;
 
         // ACT & ASSERT
@@ -99,7 +99,7 @@ class AuthControllerTest {
     void login_conCorreoInvalido_retorna400() throws Exception {
         // ACT & ASSERT
         String body = """
-                {"correo":"no-es-un-correo","password":"pass","respuestaMath":7,"operando1":3,"operando2":4}
+                {"correo":"no-es-un-correo","password":"clave-de-prueba","respuestaMath":7,"operando1":3,"operando2":4}
                 """;
 
         mockMvc.perform(post("/api/v1/auth/login")
