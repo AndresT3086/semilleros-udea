@@ -50,13 +50,13 @@ class AutenticarCoordinadorUseCaseImplTest {
     void autenticar_conCredencialesValidas_retornaToken() {
         // ARRANGE
         String correo = "coordinador@udea.edu.co";
-        String password = "UdeA2024*";
+        String password = "clave-de-prueba-no-real";
         String tokenEsperado = "eyJhbGciOiJIUzI1NiJ9.test.token";
 
         Coordinador coordinador = Coordinador.builder()
                 .id(1L)
                 .correo(correo)
-                .passwordHash("$2a$12$hashedPassword")
+                .passwordHash("hash-mockeado-de-prueba")
                 .activo(true)
                 .build();
 
@@ -121,7 +121,7 @@ class AutenticarCoordinadorUseCaseImplTest {
         Coordinador coordinador = Coordinador.builder()
                 .id(1L)
                 .correo(correo)
-                .passwordHash("$2a$12$hashedPassword")
+                .passwordHash("hash-mockeado-de-prueba")
                 .activo(true)
                 .build();
 
@@ -141,14 +141,14 @@ class AutenticarCoordinadorUseCaseImplTest {
         Coordinador coordinadorInactivo = Coordinador.builder()
                 .id(1L)
                 .correo(correo)
-                .passwordHash("$2a$12$hashedPassword")
+                .passwordHash("hash-mockeado-de-prueba")
                 .activo(false)
                 .build();
 
         when(coordinadorRepositoryPort.buscarPorCorreo(correo)).thenReturn(Optional.of(coordinadorInactivo));
 
         // ACT & ASSERT
-        assertThatThrownBy(() -> useCase.autenticar(correo, "UdeA2024*", 8, 5, 3))
+        assertThatThrownBy(() -> useCase.autenticar(correo, "clave-de-prueba-no-real", 8, 5, 3))
                 .isInstanceOf(CredencialesInvalidasException.class);
     }
 }

@@ -24,6 +24,7 @@
         <springdoc.version>2.6.0</springdoc.version>
         <jjwt.version>0.12.6</jjwt.version>
         <jacoco.version>0.8.12</jacoco.version>
+        <sonar.plugin.version>5.1.0.4751</sonar.plugin.version>
         <sonar.coverage.jacoco.xmlReportPaths>${project.reporting.outputDirectory}/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
         <sonar.coverage.minimum>0.85</sonar.coverage.minimum>
     </properties>
@@ -238,6 +239,13 @@
                         </configuration>
                     </execution>
                 </executions>
+            </plugin>
+
+            <!-- SonarCloud -->
+            <plugin>
+                <groupId>org.sonarsource.scanner.maven</groupId>
+                <artifactId>sonar-maven-plugin</artifactId>
+                <version>${sonar.plugin.version}</version>
             </plugin>
 
             <!-- Surefire for tests -->

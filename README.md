@@ -41,6 +41,8 @@ La ausencia de un sistema centralizado para los semilleros genera ineficiencias 
 | Migraciones | Flyway |
 | Documentación API | SpringDoc OpenAPI 3 (Swagger UI) |
 | Mapeo de objetos | MapStruct 1.5 |
+| Envío de correo | Spring Mail + SendGrid |
+| Rate limiting | Bucket4j |
 | Gestión de proyecto | Maven |
 | Calidad de código | SonarCloud + JaCoCo (≥ 85 %) |
 | Contenedores | Docker + Docker Compose |
@@ -151,16 +153,27 @@ mvn spring-boot:run -Pdev
 | Método | URL | Descripción |
 |---|---|---|
 | `POST` | `/api/v1/coordinador/semilleros/iniciar` | Crear borrador de semillero |
-| `GET` | `/api/v1/coordinador/semilleros/mi-semillero` | Ver semillero del coordinador |
-| `PATCH` | `/api/v1/coordinador/semilleros/{id}/pestana/general` | Guardar pestaña General |
+| `GET` | `/api/v1/coordinador/semilleros/mis-semilleros` | Ver semilleros del coordinador |
+| `GET` | `/api/v1/coordinador/semilleros/{id}` | Detalle de un semillero del coordinador |
+| `GET` | `/api/v1/coordinador/semilleros/{id}/inscripciones/pendientes` | Listar solicitudes de inscripción pendientes |
+| `POST` | `/api/v1/coordinador/semilleros/inscripciones/{idInscripcion}/aprobar` | Aprobar solicitud de inscripción |
+| `POST` | `/api/v1/coordinador/semilleros/inscripciones/{idInscripcion}/rechazar` | Rechazar solicitud de inscripción |
 | `POST` | `/api/v1/coordinador/semilleros/{id}/finalizar` | Finalizar caracterización |
+| `GET`/`PATCH` | `/api/v1/coordinador/semilleros/{id}/pestana/general` | Consultar / guardar pestaña General |
+| `GET`/`PATCH` | `/api/v1/coordinador/semilleros/{id}/pestana/produccion` | Consultar / guardar pestaña Producción Académica |
+| `GET`/`PATCH` | `/api/v1/coordinador/semilleros/{id}/pestana/organizacion` | Consultar / guardar pestaña Organización |
+| `GET`/`PATCH` | `/api/v1/coordinador/semilleros/{id}/pestana/relacionamiento` | Consultar / guardar pestaña Relacionamiento |
+| `GET`/`PATCH` | `/api/v1/coordinador/semilleros/{id}/pestana/actividades` | Consultar / guardar pestaña Actividades |
+| `GET`/`PATCH` | `/api/v1/coordinador/semilleros/{id}/pestana/dofa` | Consultar / guardar pestaña DOFA |
+| `GET`/`PATCH` | `/api/v1/coordinador/semilleros/{id}/pestana/ods` | Consultar / guardar pestaña ODS |
 
 ---
 
 ## Seguridad
 
 - **JWT** con firma HMAC-SHA256 (≥ 256 bits de secreto).
-- **Dominio restringido**: solo `@udea.edu.co` para inscripciones y coordinadores.
+- **Dominio restringido**: solo `@udea.edu.co` para el login de coordinadores. La inscripción de
+  estudiantes (`POST /api/v1/inscripciones`) no restringe el dominio del correo.
 - **Anti-bot**: operación matemática requerida en login.
 - **Contraseñas hasheadas** con BCrypt (factor 12).
 - **Anti-inyección SQL**: uso exclusivo de JPA con parámetros nombrados (sin SQL concatenado).
@@ -175,7 +188,7 @@ mvn spring-boot:run -Pdev
 |---|---|---|
 | Sprint 1 | HU-1 Visualización, HU-2 Filtros, HU-3 Detalle, HU-4 Inscripción | ✅ Implementado |
 | Sprint 2 | HU-5 Acceso formulario, HU-6 Código único, HU-7 Navegación pestañas, HU-8/9 Guardado parcial | ✅ Implementado |
-| Sprint 3 | HU-11 Actividades, HU-12/13 Navegación/Finalización, HU-15 Persistencia borrador | 🔄 Pendiente |
+| Sprint 3 | HU-11 Actividades, HU-12/13 Navegación/Finalización, HU-15 Persistencia borrador | ✅ Implementado |
 
 ---
 

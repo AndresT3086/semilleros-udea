@@ -58,7 +58,7 @@ public class JwtTokenProvider {
         try {
             parsearClaims(token);
             return true;
-        } catch (JwtException e) {
+        } catch (TokenInvalidoException e) {
             log.warn("Token JWT inválido: {}", e.getMessage());
             return false;
         }
