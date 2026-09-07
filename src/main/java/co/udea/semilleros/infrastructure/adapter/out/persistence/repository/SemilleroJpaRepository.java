@@ -68,6 +68,83 @@ public interface SemilleroJpaRepository extends JpaRepository<SemilleroEntity, L
     @Query(value = "SELECT COUNT(*) FROM semillero_actividad WHERE id_semillero = :id AND realiza = true", nativeQuery = true)
     Integer contarActividadesCientificas(@Param("id") Long id);
 
+    // ─── Reportes administrativos (solo lectura, datos reales del esquema actual) ──
+
+    @Query(value = """
+            SELECT COUNT(*) FROM semillero s
+            WHERE s.estado = 'ACTIVO'
+              AND (:anioCorte IS NULL OR s.anio_creacion IS NULL OR s.anio_creacion <= :anioCorte)
+              AND (:idUnidad  IS NULL OR s.id_unidad_academica = :idUnidad)
+              AND (:idCampus  IS NULL OR s.id_campus           = :idCampus)
+            """, nativeQuery = true)
+    Long contarSemillerosActivosHasta(
+            @Param("anioCorte") Integer anioCorte,
+            @Param("idUnidad") Long idUnidad,
+            @Param("idCampus") Long idCampus
+    );
+
+    @Query(value = """
+            SELECT COUNT(*) FROM semillero_actividad sa
+            JOIN semillero s ON s.id_semillero = sa.id_semillero
+            WHERE sa.realiza = true
+              AND (:idUnidad IS NULL OR s.id_unidad_academica = :idUnidad)
+              AND (:idCampus IS NULL OR s.id_campus           = :idCampus)
+            """, nativeQuery = true)
+    Long contarActividadesRealizadas(@Param("idUnidad") Long idUnidad, @Param("idCampus") Long idCampus);
+
+    @Query(value = """
+            SELECT ua.id_unidad AS id,
+                   ua.nombre    AS etiqueta,
+                   split_part(ua.nombre, ' ', 1) AS tipo,
+                   COUNT(DISTINCT s.id_semillero) AS cantidad_semilleros,
+                   COUNT(DISTINCT si.id)          AS cantidad_integrantes
+            FROM unidad_academica ua
+            LEFT JOIN semillero s
+                   ON s.id_unidad_academica = ua.id_unidad
+                  AND s.estado = 'ACTIVO'
+                  AND (:anioCorte IS NULL OR s.anio_creacion IS NULL OR s.anio_creacion <= :anioCorte)
+                  AND (:idCampus  IS NULL OR s.id_campus = :idCampus)
+            LEFT JOIN semillero_integrante si
+                   ON si.id_semillero = s.id_semillero
+                  AND si.activo = true
+            GROUP BY ua.id_unidad, ua.nombre
+            ORDER BY cantidad_semilleros DESC, ua.nombre ASC
+            """, nativeQuery = true)
+    List<Object[]> distribucionPorUnidadAcademicaRaw(
+            @Param("idCampus") Long idCampus,
+            @Param("anioCorte") Integer anioCorte
+    );
+
+    @Query(value = """
+            SELECT c.id_campus AS id,
+                   c.nombre    AS etiqueta,
+                   COUNT(DISTINCT s.id_semillero) AS cantidad_semilleros
+            FROM campus c
+            LEFT JOIN semillero s
+                   ON s.id_campus = c.id_campus
+                  AND s.estado = 'ACTIVO'
+                  AND (:anioCorte IS NULL OR s.anio_creacion IS NULL OR s.anio_creacion <= :anioCorte)
+                  AND (:idUnidad  IS NULL OR s.id_unidad_academica = :idUnidad)
+            GROUP BY c.id_campus, c.nombre
+            ORDER BY cantidad_semilleros DESC, c.nombre ASC
+            """, nativeQuery = true)
+    List<Object[]> distribucionPorCampusRaw(
+            @Param("idUnidad") Long idUnidad,
+            @Param("anioCorte") Integer anioCorte
+    );
+
+    @Query(value = """
+            SELECT s.anio_creacion AS anio, COUNT(*) AS cantidad
+            FROM semillero s
+            WHERE s.estado = 'ACTIVO'
+              AND s.anio_creacion IS NOT NULL
+              AND (:idUnidad IS NULL OR s.id_unidad_academica = :idUnidad)
+              AND (:idCampus IS NULL OR s.id_campus           = :idCampus)
+            GROUP BY s.anio_creacion
+            ORDER BY s.anio_creacion ASC
+            """, nativeQuery = true)
+    List<Object[]> conteoPorAnioCreacionRaw(@Param("idUnidad") Long idUnidad, @Param("idCampus") Long idCampus);
+
     Optional<SemilleroEntity> findByCodigo(String codigo);
 
     List<SemilleroEntity> findByCoordinadorId(Long idCoordinador);

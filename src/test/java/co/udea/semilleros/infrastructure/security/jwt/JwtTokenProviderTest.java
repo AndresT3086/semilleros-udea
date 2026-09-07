@@ -36,12 +36,13 @@ class JwtTokenProviderTest {
         String correo = "coordinador@udea.edu.co";
 
         // ACT
-        String token = jwtTokenProvider.generarToken(idCoordinador, correo);
+        String token = jwtTokenProvider.generarToken(idCoordinador, correo, "COORDINADOR");
 
         // ASSERT
         assertThat(token).isNotBlank();
         assertThat(jwtTokenProvider.extraerCorreo(token)).isEqualTo(correo);
         assertThat(jwtTokenProvider.extraerIdCoordinador(token)).isEqualTo(idCoordinador);
+        assertThat(jwtTokenProvider.extraerRol(token)).isEqualTo("COORDINADOR");
     }
 
     // ─── esTokenValido ──────────────────────────────────────────────────────────
@@ -50,7 +51,7 @@ class JwtTokenProviderTest {
     @DisplayName("esTokenValido: debe retornar true para un token recién generado con la misma clave")
     void esTokenValido_conTokenValido_retornaTrue() {
         // ARRANGE
-        String token = jwtTokenProvider.generarToken(1L, "correo@udea.edu.co");
+        String token = jwtTokenProvider.generarToken(1L, "correo@udea.edu.co", "COORDINADOR");
 
         // ACT & ASSERT
         assertThat(jwtTokenProvider.esTokenValido(token)).isTrue();
@@ -65,7 +66,7 @@ class JwtTokenProviderTest {
         ReflectionTestUtils.setField(otroProvider, "jwtExpirationMs", 86400000L);
         otroProvider.init();
 
-        String tokenFirmadoConOtraClave = otroProvider.generarToken(1L, "correo@udea.edu.co");
+        String tokenFirmadoConOtraClave = otroProvider.generarToken(1L, "correo@udea.edu.co", "COORDINADOR");
 
         // ACT & ASSERT
         assertThat(jwtTokenProvider.esTokenValido(tokenFirmadoConOtraClave)).isFalse();
@@ -87,7 +88,7 @@ class JwtTokenProviderTest {
         ReflectionTestUtils.setField(providerExpirado, "jwtExpirationMs", -5000L);
         providerExpirado.init();
 
-        String tokenExpirado = providerExpirado.generarToken(1L, "correo@udea.edu.co");
+        String tokenExpirado = providerExpirado.generarToken(1L, "correo@udea.edu.co", "COORDINADOR");
 
         // ACT & ASSERT
         assertThat(jwtTokenProvider.esTokenValido(tokenExpirado)).isFalse();
@@ -104,7 +105,7 @@ class JwtTokenProviderTest {
         ReflectionTestUtils.setField(providerExpirado, "jwtExpirationMs", -5000L);
         providerExpirado.init();
 
-        String tokenExpirado = providerExpirado.generarToken(1L, "correo@udea.edu.co");
+        String tokenExpirado = providerExpirado.generarToken(1L, "correo@udea.edu.co", "COORDINADOR");
 
         // ACT & ASSERT
         assertThatThrownBy(() -> jwtTokenProvider.extraerCorreo(tokenExpirado))

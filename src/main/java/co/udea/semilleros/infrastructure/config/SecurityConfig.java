@@ -68,7 +68,9 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/v1/auth/captcha-math").permitAll()
                 // Health check
                 .requestMatchers("/actuator/health").permitAll()
-                // Todo lo demás requiere autenticación
+                // Reportes y gestión exclusivos del rol administrador
+                .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+                // lo demás requiere autenticación
                 .anyRequest().authenticated()
             )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)

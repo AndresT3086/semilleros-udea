@@ -39,7 +39,7 @@ public class AutenticarCoordinadorUseCaseImpl implements AutenticarCoordinadorUs
             throw new CredencialesInvalidasException();
         }
 
-        return jwtTokenProvider.generarToken(coordinador.getId(), coordinador.getCorreo());
+        return jwtTokenProvider.generarToken(coordinador.getId(), coordinador.getCorreo(), coordinador.getRol());
     }
 
     private void validarDominioCorreo(String correo) {

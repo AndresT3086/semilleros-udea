@@ -57,12 +57,13 @@ class AutenticarCoordinadorUseCaseImplTest {
                 .id(1L)
                 .correo(correo)
                 .passwordHash("hash-mockeado-de-prueba")
+                .rol("COORDINADOR")
                 .activo(true)
                 .build();
 
         when(coordinadorRepositoryPort.buscarPorCorreo(correo)).thenReturn(Optional.of(coordinador));
         when(passwordEncoder.matches(eq(password), any())).thenReturn(true);
-        when(jwtTokenProvider.generarToken(1L, correo)).thenReturn(tokenEsperado);
+        when(jwtTokenProvider.generarToken(1L, correo, "COORDINADOR")).thenReturn(tokenEsperado);
 
         // ACT
         String tokenResultado = useCase.autenticar(correo, password, 7, 3, 4);

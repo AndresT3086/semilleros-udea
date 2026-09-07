@@ -56,7 +56,8 @@ class CoordinadorSemilleroControllerTest {
     @MockBean
     private JwtTokenProvider jwtTokenProvider;
 
-    private static final CoordinadorPrincipal PRINCIPAL = new CoordinadorPrincipal(5L, "coordinador@udea.edu.co");
+    private static final CoordinadorPrincipal PRINCIPAL =
+            new CoordinadorPrincipal(5L, "coordinador@udea.edu.co", "COORDINADOR");
 
     // Con addFilters=false la cadena de seguridad real no corre (ni JwtAuthenticationFilter
     // ni el TestSecurityContextHolderFilter de spring-security-test), así que el
