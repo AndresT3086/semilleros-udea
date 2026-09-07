@@ -145,6 +145,51 @@ public interface SemilleroJpaRepository extends JpaRepository<SemilleroEntity, L
             """, nativeQuery = true)
     List<Object[]> conteoPorAnioCreacionRaw(@Param("idUnidad") Long idUnidad, @Param("idCampus") Long idCampus);
 
+    @Query(
+            value = """
+            SELECT s.id_semillero AS id,
+                   s.nombre        AS nombre,
+                   s.codigo        AS codigo,
+                   ua.nombre       AS unidadAcademica,
+                   split_part(ua.nombre, ' ', 1) AS tipoUnidad,
+                   c.nombre        AS campus,
+                   COALESCE(pi.cnt, 0) AS participantes,
+                   COALESCE(pa.cnt, 0) AS actividadesRealizadas,
+                   s.estado        AS estado,
+                   s.anio_creacion AS anioCreacion
+            FROM semillero s
+            LEFT JOIN unidad_academica ua ON ua.id_unidad = s.id_unidad_academica
+            LEFT JOIN campus c            ON c.id_campus  = s.id_campus
+            LEFT JOIN (
+                SELECT id_semillero, COUNT(*) cnt FROM semillero_integrante WHERE activo = true GROUP BY id_semillero
+            ) pi ON pi.id_semillero = s.id_semillero
+            LEFT JOIN (
+                SELECT id_semillero, COUNT(*) cnt FROM semillero_actividad WHERE realiza = true GROUP BY id_semillero
+            ) pa ON pa.id_semillero = s.id_semillero
+            WHERE s.estado = 'ACTIVO'
+              AND (:idUnidad    IS NULL OR s.id_unidad_academica = :idUnidad)
+              AND (:idCampus    IS NULL OR s.id_campus           = :idCampus)
+              AND (:idSemillero IS NULL OR s.id_semillero        = :idSemillero)
+              AND (:anioCorte   IS NULL OR s.anio_creacion IS NULL OR s.anio_creacion <= :anioCorte)
+            """,
+            countQuery = """
+            SELECT COUNT(*) FROM semillero s
+            WHERE s.estado = 'ACTIVO'
+              AND (:idUnidad    IS NULL OR s.id_unidad_academica = :idUnidad)
+              AND (:idCampus    IS NULL OR s.id_campus           = :idCampus)
+              AND (:idSemillero IS NULL OR s.id_semillero        = :idSemillero)
+              AND (:anioCorte   IS NULL OR s.anio_creacion IS NULL OR s.anio_creacion <= :anioCorte)
+            """,
+            nativeQuery = true
+    )
+    Page<Object[]> rendimientoPorSemilleroRaw(
+            @Param("idUnidad") Long idUnidad,
+            @Param("idCampus") Long idCampus,
+            @Param("idSemillero") Long idSemillero,
+            @Param("anioCorte") Integer anioCorte,
+            Pageable pageable
+    );
+
     Optional<SemilleroEntity> findByCodigo(String codigo);
 
     List<SemilleroEntity> findByCoordinadorId(Long idCoordinador);
