@@ -4,6 +4,7 @@ import co.udea.semilleros.domain.exception.AccesoNoAutorizadoException;
 import co.udea.semilleros.domain.exception.CamposObligatoriosPendientesException;
 import co.udea.semilleros.domain.exception.CredencialesInvalidasException;
 import co.udea.semilleros.domain.exception.DominioCorreoNoPermitidoException;
+import co.udea.semilleros.domain.exception.FiltroReporteInvalidoException;
 import co.udea.semilleros.domain.exception.InscripcionDuplicadaException;
 import co.udea.semilleros.domain.exception.RecursoNoEncontradoException;
 import co.udea.semilleros.domain.exception.SemilleroYaExisteException;
@@ -86,6 +87,14 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(CamposObligatoriosPendientesException.class)
     public ResponseEntity<ApiResponse<Void>> handleCamposPendientes(CamposObligatoriosPendientesException ex) {
         log.warn("Campos obligatorios pendientes: {}", ex.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error(ex.getErrorCode(), ex.getMessage()));
+    }
+
+    @ExceptionHandler(FiltroReporteInvalidoException.class)
+    public ResponseEntity<ApiResponse<Void>> handleFiltroReporteInvalido(FiltroReporteInvalidoException ex) {
+        log.warn("Filtro de reporte inválido: {}", ex.getMessage());
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(ApiResponse.error(ex.getErrorCode(), ex.getMessage()));
