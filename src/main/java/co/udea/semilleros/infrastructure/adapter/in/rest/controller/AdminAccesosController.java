@@ -57,10 +57,13 @@ public class AdminAccesosController {
     @PostMapping("/solicitudes-acceso/{idSolicitud}/aprobar")
     @Operation(summary = "Aprobar solicitud", description = "Crea la cuenta de coordinador y envía el enlace para "
             + "crear la contraseña (vence en 24 horas).")
-    public ResponseEntity<ApiResponse<Void>> aprobar(@PathVariable Long idSolicitud,
-                                                     @AuthenticationPrincipal UsuarioPrincipal principal) {
-        administrarAccesosUseCase.aprobar(idSolicitud, principal.getId());
-        return ResponseEntity.ok(ApiResponse.exito("Solicitud aprobada. Se envió el enlace de activación.", null));
+    public ResponseEntity<ApiResponse<Map<String, Boolean>>> aprobar(@PathVariable Long idSolicitud,
+                                                                     @AuthenticationPrincipal UsuarioPrincipal principal) {
+        boolean correoEnviado = administrarAccesosUseCase.aprobar(idSolicitud, principal.getId());
+        String mensaje = correoEnviado ? "Solicitud aprobada. Se envió el enlace de activación."
+                : "La solicitud quedó aprobada, pero no se pudo enviar el correo de activación. Cuando el correo "
+                        + "funcione, usa «Invitar coordinador» con el mismo correo para reenviar el enlace.";
+        return ResponseEntity.ok(ApiResponse.exito(mensaje, Map.of("correoEnviado", correoEnviado)));
     }
 
     @PostMapping("/solicitudes-acceso/{idSolicitud}/rechazar")
@@ -80,7 +83,13 @@ public class AdminAccesosController {
                                                                   @AuthenticationPrincipal UsuarioPrincipal principal) {
         InvitacionEnviada invitacion = administrarAccesosUseCase.invitar(
                 new DatosInvitacion(request.nombres(), request.apellidos(), request.correo()), principal.getId());
-        String mensaje = invitacion.reenviada() ? "Invitación reenviada." : "Invitación enviada.";
+        String mensaje;
+        if (!invitacion.correoEnviado()) {
+            mensaje = "La invitación quedó registrada, pero no se pudo enviar el correo. Revisa la configuración "
+                    + "del correo e inténtalo de nuevo: al reenviarla se genera un enlace nuevo.";
+        } else {
+            mensaje = invitacion.reenviada() ? "Invitación reenviada." : "Invitación enviada.";
+        }
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.exito(mensaje, invitacion));
     }
 }

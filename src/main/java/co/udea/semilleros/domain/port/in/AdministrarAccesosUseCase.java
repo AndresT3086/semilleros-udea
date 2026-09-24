@@ -16,7 +16,8 @@ public interface AdministrarAccesosUseCase {
 
     long contarPendientes();
 
-    void aprobar(Long idSolicitud, Long idAdministrador);
+    /** @return {@code true} si el correo con el enlace de activación se pudo enviar */
+    boolean aprobar(Long idSolicitud, Long idAdministrador);
 
     void rechazar(Long idSolicitud, Long idAdministrador, String motivo, boolean bloquear);
 

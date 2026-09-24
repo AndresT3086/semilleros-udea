@@ -68,19 +68,20 @@ public class AdministrarAccesosUseCaseImpl implements AdministrarAccesosUseCase 
     }
 
     @Override
-    public void aprobar(Long idSolicitud, Long idAdministrador) {
+    public boolean aprobar(Long idSolicitud, Long idAdministrador) {
         SolicitudAcceso solicitud = solicitudPendiente(idSolicitud);
         if (usuarioRepositoryPort.buscarPorCorreo(solicitud.correo()).isPresent()) {
             throw new ConflictoAccesoException("Ya existe una cuenta con el correo de esta solicitud.");
         }
         Usuario usuario = usuarioRepositoryPort.guardar(nuevoCoordinador(
                 solicitud.nombres(), solicitud.apellidos(), solicitud.correo()));
-        enviarActivacion(usuario, TokenCuenta.OrigenToken.APROBACION);
+        boolean correoEnviado = enviarActivacion(usuario, TokenCuenta.OrigenToken.APROBACION).correoEnviado();
         solicitudAccesoRepositoryPort.actualizar(solicitud.toBuilder()
                 .estado(EstadoSolicitud.APROBADA)
                 .idRevisor(idAdministrador)
                 .fechaRevision(clock.instant())
                 .build());
+        return correoEnviado;
     }
 
     @Override
@@ -120,7 +121,7 @@ public class AdministrarAccesosUseCaseImpl implements AdministrarAccesosUseCase 
         }
         Usuario usuario = existente.orElseGet(() -> usuarioRepositoryPort.guardar(
                 nuevoCoordinador(datos.nombres().trim(), datos.apellidos().trim(), correo)));
-        Instant expira = enviarActivacion(usuario, TokenCuenta.OrigenToken.INVITACION);
+        EnvioActivacion envio = enviarActivacion(usuario, TokenCuenta.OrigenToken.INVITACION);
 
         solicitudAccesoRepositoryPort.buscarEnCurso(correo, null)
                 .filter(solicitud -> solicitud.correo().equals(correo))
@@ -131,7 +132,7 @@ public class AdministrarAccesosUseCaseImpl implements AdministrarAccesosUseCase 
                         .idRevisor(idAdministrador)
                         .fechaRevision(clock.instant())
                         .build()));
-        return new InvitacionEnviada(usuario.getId(), correo, expira, existente.isPresent());
+        return new InvitacionEnviada(usuario.getId(), correo, envio.expira(), existente.isPresent(), envio.correoEnviado());
     }
 
     @Override
@@ -170,14 +171,17 @@ public class AdministrarAccesosUseCaseImpl implements AdministrarAccesosUseCase 
                 .build();
     }
 
-    private Instant enviarActivacion(Usuario usuario, TokenCuenta.OrigenToken origen) {
+    private record EnvioActivacion(Instant expira, boolean correoEnviado) {
+    }
+
+    private EnvioActivacion enviarActivacion(Usuario usuario, TokenCuenta.OrigenToken origen) {
         TokenGenerado token = tokenSeguroPort.generar();
         Instant expira = clock.instant().plus(Duration.ofHours(horasActivacion));
         tokenCuentaRepositoryPort.crear(usuario.getId(), token.hash(), origen, expira);
-        notificacionEmailPort.enviarActivacionCuenta(usuario.getCorreo(),
+        boolean correoEnviado = notificacionEmailPort.enviarActivacionCuenta(usuario.getCorreo(),
                 (usuario.getNombres() + " " + usuario.getApellidos()).trim(), token.valor(),
                 origen == TokenCuenta.OrigenToken.INVITACION);
-        return expira;
+        return new EnvioActivacion(expira, correoEnviado);
     }
 
     private static boolean vacio(String valor) {

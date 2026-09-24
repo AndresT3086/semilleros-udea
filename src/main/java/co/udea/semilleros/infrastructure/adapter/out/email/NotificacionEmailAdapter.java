@@ -79,12 +79,12 @@ public class NotificacionEmailAdapter implements NotificacionEmailPort {
     }
 
     @Override
-    public void enviarActivacionCuenta(String correo, String nombre, String token, boolean invitacion) {
+    public boolean enviarActivacionCuenta(String correo, String nombre, String token, boolean invitacion) {
         String enlace = enlace("activar", token);
         String motivo = invitacion
                 ? "Un administrador te invitó a coordinar semilleros en el sistema."
                 : "Tu solicitud de acceso como coordinador fue aprobada.";
-        enviarCorreo(correo, invitacion ? "Invitación al Sistema de Semilleros UdeA" : "Tu solicitud de acceso fue aprobada",
+        return enviarCorreo(correo, invitacion ? "Invitación al Sistema de Semilleros UdeA" : "Tu solicitud de acceso fue aprobada",
                 plantilla("Crea tu contraseña",
                         "<p>Hola " + escapar(nombre) + ",</p><p>" + motivo
                                 + " Para activar tu cuenta, crea tu contraseña:</p>"
@@ -119,11 +119,13 @@ public class NotificacionEmailAdapter implements NotificacionEmailPort {
         return frontendUrl + "/?accion=" + accion + "&token=" + URLEncoder.encode(token, StandardCharsets.UTF_8);
     }
 
-    private void enviarCorreo(String destinatario, String asunto, String cuerpo, String enlace) {
+    /** En desarrollo, sin clave de SendGrid, el enlace escrito en el log cuenta como entregado. */
+    private boolean enviarCorreo(String destinatario, String asunto, String cuerpo, String enlace) {
         if (enlace != null && registrarEnlacesSinEnvio && (sendGridApiKey == null || sendGridApiKey.isBlank())) {
             log.warn("[desarrollo] SENDGRID_API_KEY vacía: correo NO enviado a {}. Enlace: {}", destinatario, enlace);
+            return true;
         }
-        enviarCorreo(destinatario, asunto, cuerpo);
+        return enviarCorreo(destinatario, asunto, cuerpo);
     }
 
     private static String boton(String enlace, String texto) {
@@ -162,10 +164,11 @@ public class NotificacionEmailAdapter implements NotificacionEmailPort {
         return texto == null ? "" : HtmlUtils.htmlEscape(texto);
     }
 
-    private void enviarCorreo(String destinatario, String asunto, String cuerpo) {
+    /** @return {@code true} si SendGrid aceptó el correo */
+    private boolean enviarCorreo(String destinatario, String asunto, String cuerpo) {
         if (sendGridApiKey == null || sendGridApiKey.isBlank()) {
             log.warn("SendGrid API Key no configurada. Correo NO enviado a: {}", destinatario);
-            return;
+            return false;
         }
 
         try {
@@ -174,7 +177,7 @@ public class NotificacionEmailAdapter implements NotificacionEmailPort {
             Content content = new Content("text/html", cuerpo);
             Mail mail     = new Mail(from, asunto, to, content);
 
-            SendGrid sg      = new SendGrid(sendGridApiKey);
+            SendGrid sg      = crearCliente();
             Request request  = new Request();
             request.setMethod(Method.POST);
             request.setEndpoint("mail/send");
@@ -185,14 +188,20 @@ public class NotificacionEmailAdapter implements NotificacionEmailPort {
             if (response.getStatusCode() >= 200 && response.getStatusCode() < 300) {
                 log.info("Correo enviado exitosamente a: {} | Status: {}",
                         destinatario, response.getStatusCode());
-            } else {
-                log.error("Error al enviar correo a: {} | Status: {} | Body: {}",
-                        destinatario, response.getStatusCode(), response.getBody());
+                return true;
             }
+            log.error("Error al enviar correo a: {} | Status: {} | Body: {}",
+                    destinatario, response.getStatusCode(), response.getBody());
+            return false;
 
         } catch (Exception e) {
             log.error("Excepción al enviar correo a {}: {}", destinatario, e.getMessage());
+            return false;
         }
+    }
+
+    SendGrid crearCliente() {
+        return new SendGrid(sendGridApiKey);
     }
 
     private String construirCuerpoInscripcion(Inscripcion inscripcion) {

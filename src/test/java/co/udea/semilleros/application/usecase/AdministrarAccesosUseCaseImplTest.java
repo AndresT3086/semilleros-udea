@@ -35,6 +35,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
@@ -90,8 +91,9 @@ class AdministrarAccesosUseCaseImplTest {
         when(usuarios.buscarPorCorreo("ana@udea.edu.co")).thenReturn(Optional.empty());
         when(usuarios.guardar(any())).thenAnswer(inv -> ((Usuario) inv.getArgument(0)).withId(20L));
         when(tokenSeguro.generar()).thenReturn(new TokenGenerado("valor", "hash"));
+        when(notificaciones.enviarActivacionCuenta(any(), any(), any(), anyBoolean())).thenReturn(true);
 
-        useCase.aprobar(5L, ADMIN);
+        assertThat(useCase.aprobar(5L, ADMIN)).isTrue();
 
         ArgumentCaptor<Usuario> usuario = ArgumentCaptor.forClass(Usuario.class);
         verify(usuarios).guardar(usuario.capture());
@@ -105,6 +107,22 @@ class AdministrarAccesosUseCaseImplTest {
         assertThat(revisada.getValue().estado()).isEqualTo(EstadoSolicitud.APROBADA);
         assertThat(revisada.getValue().idRevisor()).isEqualTo(ADMIN);
         assertThat(revisada.getValue().fechaRevision()).isEqualTo(AHORA);
+    }
+
+    @Test
+    @DisplayName("aprobar: si el correo falla la solicitud queda aprobada e informa que no se envió")
+    void aprobar_correoFallido() {
+        when(solicitudes.buscarPorId(5L)).thenReturn(Optional.of(solicitud(EstadoSolicitud.PENDIENTE)));
+        when(usuarios.buscarPorCorreo("ana@udea.edu.co")).thenReturn(Optional.empty());
+        when(usuarios.guardar(any())).thenAnswer(inv -> ((Usuario) inv.getArgument(0)).withId(20L));
+        when(tokenSeguro.generar()).thenReturn(new TokenGenerado("valor", "hash"));
+        when(notificaciones.enviarActivacionCuenta(any(), any(), any(), anyBoolean())).thenReturn(false);
+
+        assertThat(useCase.aprobar(5L, ADMIN)).isFalse();
+
+        ArgumentCaptor<SolicitudAcceso> revisada = ArgumentCaptor.forClass(SolicitudAcceso.class);
+        verify(solicitudes).actualizar(revisada.capture());
+        assertThat(revisada.getValue().estado()).isEqualTo(EstadoSolicitud.APROBADA);
     }
 
     @Test
@@ -161,10 +179,11 @@ class AdministrarAccesosUseCaseImplTest {
         when(tokenSeguro.generar()).thenReturn(new TokenGenerado("valor", "hash"));
         when(solicitudes.buscarEnCurso(eq("ana@udea.edu.co"), isNull()))
                 .thenReturn(Optional.of(solicitud(EstadoSolicitud.PENDIENTE_VERIFICACION)));
+        when(notificaciones.enviarActivacionCuenta(any(), any(), any(), anyBoolean())).thenReturn(true);
 
         InvitacionEnviada resultado = useCase.invitar(new DatosInvitacion(" Ana ", " Zapata ", " ANA@udea.edu.co "), ADMIN);
 
-        assertThat(resultado).isEqualTo(new InvitacionEnviada(21L, "ana@udea.edu.co", AHORA.plus(Duration.ofHours(24)), false));
+        assertThat(resultado).isEqualTo(new InvitacionEnviada(21L, "ana@udea.edu.co", AHORA.plus(Duration.ofHours(24)), false, true));
         verify(tokensCuenta).crear(21L, "hash", TokenCuenta.OrigenToken.INVITACION, AHORA.plus(Duration.ofHours(24)));
         verify(notificaciones).enviarActivacionCuenta("ana@udea.edu.co", "Ana Zapata", "valor", true);
         ArgumentCaptor<SolicitudAcceso> captor = ArgumentCaptor.forClass(SolicitudAcceso.class);
@@ -186,6 +205,7 @@ class AdministrarAccesosUseCaseImplTest {
         InvitacionEnviada reenviada = useCase.invitar(new DatosInvitacion("Ana", "Zapata", "ana@udea.edu.co"), ADMIN);
 
         assertThat(reenviada.reenviada()).isTrue();
+        assertThat(reenviada.correoEnviado()).isFalse();
         verify(usuarios, never()).guardar(any());
         assertThatThrownBy(() -> useCase.invitar(new DatosInvitacion("Ana", "Zapata", "ana@udea.edu.co"), ADMIN))
                 .isInstanceOf(ConflictoAccesoException.class);
