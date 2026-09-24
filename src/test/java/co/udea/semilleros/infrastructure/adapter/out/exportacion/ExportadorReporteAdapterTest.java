@@ -35,7 +35,7 @@ class ExportadorReporteAdapterTest {
 
     private static ReporteCompleto reporte(List<ReporteRendimiento> filas) {
         ReporteKpis kpis = new ReporteKpis(4, 10, 8, 12, 80.0,
-                new ReporteKpis.Tendencias(33.3, null, -5.0, 2.5), "2024",
+                new ReporteKpis.Tendencias(33.3, null, -5.0, 50.0, 2.5), "2024",
                 LocalDateTime.of(2026, 9, 24, 10, 30), AlcanceReporte.ADMIN);
         ReporteDashboard dashboard = new ReporteDashboard(kpis,
                 List.of(new ReporteUnidad(1L, "Facultad de Ingeniería", TipoUnidad.FACULTAD, 3, 9)),
@@ -94,7 +94,7 @@ class ExportadorReporteAdapterTest {
             assertThat(hojas).containsExactly("Resumen", "Indicadores clave", "Rendimiento por semillero",
                     "Semilleros por unidad académica", "Top facultades con más semiller",
                     "Semilleros por campus o seccion", "Integrantes por sexo", "Integrantes según rol desempeña",
-                    "Evolución de semilleros activos", "Actividades por tipo (semillero");
+                    "Evolución de semilleros activos", "Actividades registradas por tip");
 
             Sheet resumen = libro.getSheet("Resumen");
             assertThat(resumen.getRow(0).getCell(0).getStringCellValue()).isEqualTo(ExportadorReporteAdapter.TITULO);
@@ -111,8 +111,8 @@ class ExportadorReporteAdapterTest {
             assertThat(kpis.getRow(5).getCell(2).getStringCellValue()).isEqualTo("-5,0 %");
             assertThat(kpis.getRow(7).getCell(1).getStringCellValue()).isEqualTo("80,0 %");
             assertThat(kpis.getRow(7).getCell(2).getStringCellValue()).isEqualTo("+2,5 pp");
-            assertThat(kpis.getRow(8).getCell(1).getStringCellValue()).isEqualTo("12");
-            assertThat(kpis.getRow(9).getCell(1).getStringCellValue()).isEqualTo("90,0 %");
+            assertThat(kpis.getRow(6).getCell(2).getStringCellValue()).isEqualTo("+50,0 %");
+            assertThat(kpis.getRow(8).getCell(1).getStringCellValue()).isEqualTo("90,0 %");
 
             Sheet sexo = libro.getSheet("Integrantes por sexo");
             assertThat(sexo.getRow(3).getCell(2).getStringCellValue()).isEqualTo("62,5 %");

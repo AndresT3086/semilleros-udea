@@ -44,6 +44,13 @@ public class ReportesRepositoryAdapter implements ReportesRepositoryPort {
              LEFT JOIN unidad_academica ua ON ua.id_unidad = s.id_unidad_academica
             """;
 
+    private static final String DESDE_SESION = """
+             FROM sesion_semillero ss
+             JOIN semillero s ON s.id_semillero = ss.id_semillero
+             LEFT JOIN unidad_academica ua ON ua.id_unidad = s.id_unidad_academica
+            """;
+
+    static final String SIN_CLASIFICAR = "SIN_CLASIFICAR";
     private static final String NO_INFORMADO = "NO_INFORMADO";
     private static final Map<String, String> NOMBRES_SEXO = new LinkedHashMap<>();
 
@@ -144,12 +151,7 @@ public class ReportesRepositoryAdapter implements ReportesRepositoryPort {
     @Override
     public long contarActividadesRealizadas(ReporteFiltro filtro) {
         Condiciones c = condiciones(filtro, false);
-        return contar("""
-                SELECT COUNT(*)
-                 FROM semillero_actividad sa
-                 JOIN semillero s ON s.id_semillero = sa.id_semillero
-                 LEFT JOIN unidad_academica ua ON ua.id_unidad = s.id_unidad_academica
-                """ + c.sql() + " AND sa.realiza = TRUE", c.parametros());
+        return contar("SELECT COUNT(*)" + DESDE_SESION + c.sql() + c.sesionesEnPeriodo(), c.parametros());
     }
 
     @Override
@@ -237,23 +239,25 @@ public class ReportesRepositoryAdapter implements ReportesRepositoryPort {
         return resultado;
     }
 
-    /** Semilleros que realizan cada actividad del formulario de caracterización (RN28). */
+    /** Actividades registradas por tipo del catálogo del formulario de caracterización (RN28). */
     @Override
     public List<ReporteConteo> actividadesPorTipo(ReporteFiltro filtro) {
         Condiciones c = condiciones(filtro, false);
         String sql = """
                 SELECT ac.id_actividad AS id, ac.nombre AS nombre, COALESCE(x.cantidad, 0) AS cantidad
                  FROM actividad_cientifica ac
-                 LEFT JOIN (SELECT sa.id_actividad AS id_actividad, COUNT(*) AS cantidad
-                 FROM semillero_actividad sa
-                 JOIN semillero s ON s.id_semillero = sa.id_semillero
-                 LEFT JOIN unidad_academica ua ON ua.id_unidad = s.id_unidad_academica
-                """ + c.sql() + """
-                 AND sa.realiza = TRUE
-                 GROUP BY sa.id_actividad) x ON x.id_actividad = ac.id_actividad
+                 LEFT JOIN (SELECT ss.id_actividad AS id_actividad, COUNT(*) AS cantidad
+                """ + DESDE_SESION + c.sql() + c.sesionesEnPeriodo() + """
+                 GROUP BY ss.id_actividad) x ON x.id_actividad = ac.id_actividad
                  ORDER BY ac.id_actividad
                 """;
-        return jdbc.query(sql, c.parametros(), conteo());
+        List<ReporteConteo> resultado = new ArrayList<>(jdbc.query(sql, c.parametros(), conteo()));
+        long sinClasificar = contar("SELECT COUNT(*)" + DESDE_SESION + c.sql() + c.sesionesEnPeriodo()
+                + " AND ss.id_actividad IS NULL", c.parametros());
+        if (sinClasificar > 0) {
+            resultado.add(new ReporteConteo(SIN_CLASIFICAR, "Sin clasificar", sinClasificar));
+        }
+        return resultado;
     }
 
     @Override
@@ -264,11 +268,8 @@ public class ReportesRepositoryAdapter implements ReportesRepositoryPort {
                        COALESCE(SUM(CASE WHEN a.estado = 'PRESENTE' THEN 1 ELSE 0 END), 0) AS presentes,
                        COALESCE(SUM(CASE WHEN a.estado = 'AUSENTE'  THEN 1 ELSE 0 END), 0) AS ausentes,
                        COALESCE(SUM(CASE WHEN a.estado = 'EXCUSADO' THEN 1 ELSE 0 END), 0) AS excusados
-                 FROM sesion_semillero ss
-                 JOIN semillero s ON s.id_semillero = ss.id_semillero
-                 LEFT JOIN unidad_academica ua ON ua.id_unidad = s.id_unidad_academica
-                 LEFT JOIN asistencia_sesion a ON a.id_sesion = ss.id_sesion
-                """ + c.sql() + c.sesionesEnPeriodo();
+                """ + DESDE_SESION + " LEFT JOIN asistencia_sesion a ON a.id_sesion = ss.id_sesion"
+                + c.sql() + c.sesionesEnPeriodo();
         return jdbc.queryForObject(sql, c.parametros(), (rs, i) -> new ReporteAsistencia(rs.getLong("sesiones"),
                 new ConteoAsistencia(rs.getLong("presentes"), rs.getLong("ausentes"), rs.getLong("excusados"))));
     }

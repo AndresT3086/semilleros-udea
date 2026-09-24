@@ -26,6 +26,7 @@ public interface ReportesRepositoryPort {
     /** Personas únicas (por cédula) con vinculación activa hasta la fecha de corte. */
     long contarIntegrantesActivos(ReporteFiltro filtro);
 
+    /** Actividades registradas (sesiones) con fecha dentro del período. */
     long contarActividadesRealizadas(ReporteFiltro filtro);
 
     List<ReporteUnidad> distribucionPorUnidad(ReporteFiltro filtro);
@@ -39,6 +40,7 @@ public interface ReportesRepositoryPort {
     /** Semilleros activos creados cada año (solo los que tienen año de creación). */
     Map<Integer, Long> semillerosCreadosPorAnio(ReporteFiltro filtro);
 
+    /** Actividades registradas en el período por tipo del catálogo, más las no clasificadas si las hay. */
     List<ReporteConteo> actividadesPorTipo(ReporteFiltro filtro);
 
     /** Actividades registradas en el período y asistencia agregada de los semilleros filtrados. */

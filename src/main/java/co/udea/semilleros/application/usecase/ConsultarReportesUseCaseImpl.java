@@ -63,12 +63,14 @@ public class ConsultarReportesUseCaseImpl implements ConsultarReportesUseCase {
         long semillerosAntes = reportesRepositoryPort.contarSemillerosActivos(anterior);
         long registradosAntes = reportesRepositoryPort.contarIntegrantesRegistrados(anterior);
         long activosAntes = reportesRepositoryPort.contarIntegrantesActivos(anterior);
+        long actividadesAntes = reportesRepositoryPort.contarActividadesRealizadas(anterior);
         Double tasaAntes = porcentaje(activosAntes, registradosAntes);
 
         ReporteKpis.Tendencias tendencias = new ReporteKpis.Tendencias(
                 variacion(semilleros, semillerosAntes),
                 variacion(registrados, registradosAntes),
                 variacion(activos, activosAntes),
+                variacion(actividades, actividadesAntes),
                 tasa == null || tasaAntes == null ? null : redondear(tasa - tasaAntes));
 
         String comparado = anterior.periodo() != null ? anterior.periodo() : "mes anterior";

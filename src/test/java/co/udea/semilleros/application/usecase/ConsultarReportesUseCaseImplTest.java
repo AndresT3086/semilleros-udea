@@ -88,7 +88,8 @@ class ConsultarReportesUseCaseImplTest {
     void obtenerKpis_calculaTasaYTendencias() {
         simularConteos("2025", 12, 200, 150);
         simularConteos("2024", 10, 160, 120);
-        when(reportesRepositoryPort.contarActividadesRealizadas(any())).thenReturn(40L);
+        when(reportesRepositoryPort.contarActividadesRealizadas(argThat(f -> f != null && "2025".equals(f.periodo())))).thenReturn(40L);
+        when(reportesRepositoryPort.contarActividadesRealizadas(argThat(f -> f != null && "2024".equals(f.periodo())))).thenReturn(32L);
 
         ReporteKpis kpis = useCase.obtenerKpis(filtro("2025"));
 
@@ -100,6 +101,7 @@ class ConsultarReportesUseCaseImplTest {
         assertThat(kpis.tendencias().semillerosActivos()).isEqualTo(20.0);
         assertThat(kpis.tendencias().usuariosRegistrados()).isEqualTo(25.0);
         assertThat(kpis.tendencias().miembrosActivos()).isEqualTo(25.0);
+        assertThat(kpis.tendencias().actividadesRealizadas()).isEqualTo(25.0);
         assertThat(kpis.tendencias().tasaParticipacion()).isEqualTo(0.0);
         assertThat(kpis.periodoComparado()).isEqualTo("2024");
         assertThat(kpis.alcance()).isEqualTo(AlcanceReporte.ADMIN);

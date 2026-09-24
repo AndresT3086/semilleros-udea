@@ -54,7 +54,7 @@ class ReportesRepositoryAdapterTest {
         assertThat(adapter.contarSemillerosActivos(todos())).isEqualTo(4);
         assertThat(adapter.contarIntegrantesRegistrados(todos())).isEqualTo(4);
         assertThat(adapter.contarIntegrantesActivos(todos())).isEqualTo(3);
-        assertThat(adapter.contarActividadesRealizadas(todos())).isEqualTo(4);
+        assertThat(adapter.contarActividadesRealizadas(todos())).isEqualTo(3);
     }
 
     @Test
@@ -65,6 +65,8 @@ class ReportesRepositoryAdapterTest {
         assertThat(adapter.contarSemillerosActivos(filtro)).isEqualTo(3);
         assertThat(adapter.contarIntegrantesRegistrados(filtro)).isEqualTo(2);
         assertThat(adapter.contarIntegrantesActivos(filtro)).isEqualTo(1);
+        assertThat(adapter.contarActividadesRealizadas(filtro)).isZero();
+        assertThat(adapter.contarActividadesRealizadas(ReporteFiltro.de("2026", null, null, null, null))).isEqualTo(2);
     }
 
     @Test
@@ -147,14 +149,19 @@ class ReportesRepositoryAdapterTest {
     }
 
     @Test
-    @DisplayName("actividadesPorTipo: semilleros que realizan cada actividad del catálogo (HU8)")
+    @DisplayName("actividadesPorTipo: actividades registradas por tipo del catálogo y no clasificadas (HU8)")
     void actividadesPorTipo() {
         assertThat(adapter.actividadesPorTipo(todos()))
                 .extracting(ReporteConteo::nombre, ReporteConteo::cantidad)
-                .containsExactly(tuple("Seminarios", 1L), tuple("Talleres", 2L), tuple("Conversatorios", 1L));
-        assertThat(adapter.actividadesPorTipo(ReporteFiltro.de(null, null, null, null, 2L)))
+                .containsExactly(tuple("Seminarios", 1L), tuple("Talleres", 2L), tuple("Conversatorios", 0L));
+        assertThat(adapter.actividadesPorTipo(ReporteFiltro.de("2026-1", null, null, null, null)))
                 .extracting(ReporteConteo::cantidad)
                 .containsExactly(0L, 1L, 0L);
+
+        new NamedParameterJdbcTemplate(dataSource).getJdbcTemplate()
+                .update("INSERT INTO sesion_semillero (id_sesion, id_semillero, fecha) VALUES (9, 3, DATE '2026-03-01')");
+        assertThat(adapter.actividadesPorTipo(todos()))
+                .last().isEqualTo(new ReporteConteo("SIN_CLASIFICAR", "Sin clasificar", 1));
     }
 
     @Test

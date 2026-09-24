@@ -71,7 +71,7 @@ final class SeccionesReporte {
                 List.of("Año", "Semilleros activos", "Creados en el año", "Tipo de dato"),
                 d.evolucion().stream().map(e -> fila(String.valueOf(e.anio()), numero(e.semillerosActivos()),
                         numero(e.nuevos()), e.proyectado() ? "Proyección" : "Registrado")).toList()));
-        secciones.add(conPorcentaje("Actividades por tipo (semilleros que las realizan)", "Actividad",
+        secciones.add(conPorcentaje("Actividades registradas por tipo", "Actividad",
                 d.actividadesPorTipo()));
         return secciones;
     }
@@ -99,12 +99,11 @@ final class SeccionesReporte {
                 fila("Semilleros activos", numero(k.semillerosActivos()), variacion(k.tendencias().semillerosActivos())),
                 fila("Usuarios registrados", numero(k.usuariosRegistrados()), variacion(k.tendencias().usuariosRegistrados())),
                 fila("Miembros activos", numero(k.miembrosActivos()), variacion(k.tendencias().miembrosActivos())),
-                fila("Actividades realizadas", numero(k.actividadesRealizadas()), NO_DISPONIBLE),
+                fila("Actividades realizadas", numero(k.actividadesRealizadas()), variacion(k.tendencias().actividadesRealizadas())),
                 fila("Tasa de participación",
                         k.tasaParticipacion() == null ? NO_DISPONIBLE : porcentaje(k.tasaParticipacion()),
                         k.tendencias().tasaParticipacion() == null ? NO_DISPONIBLE
                                 : signo(k.tendencias().tasaParticipacion()) + " pp"),
-                fila("Actividades registradas con asistencia", numero(asistencia.sesiones()), NO_DISPONIBLE),
                 fila("% Asistencia (excusas descontadas)", asistencia.asistencia().porcentaje() == null ? NO_DISPONIBLE
                         : porcentaje(asistencia.asistencia().porcentaje()), NO_DISPONIBLE)));
     }

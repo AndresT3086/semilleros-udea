@@ -76,7 +76,7 @@ class ReportesControllerTest {
     private JwtTokenProvider jwtTokenProvider;
 
     private static final ReporteKpis KPIS = new ReporteKpis(4, 10, 8, 12, 80.0,
-            new ReporteKpis.Tendencias(33.3, null, null, null), "2024",
+            new ReporteKpis.Tendencias(33.3, null, null, 10.0, null), "2024",
             LocalDateTime.of(2026, 9, 24, 10, 30), AlcanceReporte.ADMIN);
 
     private static final ReporteDashboard DASHBOARD = new ReporteDashboard(KPIS, List.of(), List.of(), List.of(),
@@ -108,6 +108,7 @@ class ReportesControllerTest {
                 .andExpect(jsonPath("$.datos.semillerosActivos").value(4))
                 .andExpect(jsonPath("$.datos.tasaParticipacion").value(80.0))
                 .andExpect(jsonPath("$.datos.tendencias.semillerosActivos").value(33.3))
+                .andExpect(jsonPath("$.datos.tendencias.actividadesRealizadas").value(10.0))
                 .andExpect(jsonPath("$.datos.periodoComparado").value("2024"));
     }
 
