@@ -5,9 +5,19 @@ import co.udea.semilleros.domain.model.Semillero;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import com.sendgrid.Request;
+import com.sendgrid.Response;
+import com.sendgrid.SendGrid;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.io.IOException;
+import java.util.Map;
+
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @DisplayName("NotificacionEmailAdapter - Pruebas unitarias")
 class NotificacionEmailAdapterTest {
@@ -122,6 +132,39 @@ class NotificacionEmailAdapterTest {
             adapter.enviarResumenSolicitudesPendientes("admin@udea.edu.co", 1);
             adapter.enviarResumenSolicitudesPendientes("admin@udea.edu.co", 3);
         }).doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("enviarActivacionCuenta: informa si SendGrid aceptó, rechazó o no pudo recibir el correo")
+    void enviarActivacionCuenta_informaResultadoDelEnvio() throws IOException {
+        SendGrid cliente = mock(SendGrid.class);
+        NotificacionEmailAdapter conCliente = new NotificacionEmailAdapter() {
+            @Override
+            SendGrid crearCliente() {
+                return cliente;
+            }
+        };
+        ReflectionTestUtils.setField(conCliente, "sendGridApiKey", "clave-de-prueba");
+        ReflectionTestUtils.setField(conCliente, "mailFrom", "noreply@udea.edu.co");
+        ReflectionTestUtils.setField(conCliente, "mailFromName", "Sistema de Semilleros UdeA");
+        ReflectionTestUtils.setField(conCliente, "frontendUrl", "http://localhost:5173");
+        when(cliente.api(any(Request.class)))
+                .thenReturn(new Response(202, "", Map.of()))
+                .thenReturn(new Response(401, "{\"errors\":[{\"message\":\"Maximum credits exceeded\"}]}", Map.of()))
+                .thenThrow(new IOException("sin conexión"));
+
+        assertThat(conCliente.enviarActivacionCuenta("ana@udea.edu.co", "Ana", "token", true)).isTrue();
+        assertThat(conCliente.enviarActivacionCuenta("ana@udea.edu.co", "Ana", "token", true)).isFalse();
+        assertThat(conCliente.enviarActivacionCuenta("ana@udea.edu.co", "Ana", "token", false)).isFalse();
+    }
+
+    @Test
+    @DisplayName("enviarActivacionCuenta: sin API Key no se envía; en desarrollo el enlace del log cuenta como entregado")
+    void enviarActivacionCuenta_sinApiKey() {
+        ReflectionTestUtils.setField(adapter, "frontendUrl", "http://localhost:5173");
+        assertThat(adapter.enviarActivacionCuenta("ana@udea.edu.co", "Ana", "token", true)).isFalse();
+        ReflectionTestUtils.setField(adapter, "registrarEnlacesSinEnvio", true);
+        assertThat(adapter.enviarActivacionCuenta("ana@udea.edu.co", "Ana", "token", true)).isTrue();
     }
 
     @Test

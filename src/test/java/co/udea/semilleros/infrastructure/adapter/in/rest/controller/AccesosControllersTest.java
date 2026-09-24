@@ -164,8 +164,14 @@ class AccesosControllersTest {
     @DisplayName("POST aprobar/rechazar: usan el administrador autenticado; conflictos retornan 409")
     void aprobarYRechazar() throws Exception {
         autenticarComo("ADMIN");
-        mockMvc.perform(post("/api/v1/admin/solicitudes-acceso/5/aprobar")).andExpect(status().isOk());
+        when(administrarAccesosUseCase.aprobar(5L, 6L)).thenReturn(true);
+        mockMvc.perform(post("/api/v1/admin/solicitudes-acceso/5/aprobar")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.mensaje").value("Solicitud aprobada. Se envió el enlace de activación."))
+                .andExpect(jsonPath("$.datos.correoEnviado").value(true));
         verify(administrarAccesosUseCase).aprobar(5L, 6L);
+        mockMvc.perform(post("/api/v1/admin/solicitudes-acceso/8/aprobar")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.mensaje").value(org.hamcrest.Matchers.startsWith("La solicitud quedó aprobada, pero no se pudo enviar")))
+                .andExpect(jsonPath("$.datos.correoEnviado").value(false));
 
         mockMvc.perform(post("/api/v1/admin/solicitudes-acceso/5/rechazar").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"motivo\": \"No coordina semilleros\", \"bloquear\": true}"))
@@ -187,7 +193,9 @@ class AccesosControllersTest {
     void invitar() throws Exception {
         autenticarComo("ADMIN");
         when(administrarAccesosUseCase.invitar(eq(new DatosInvitacion("Ana", "Zapata", "ana@udea.edu.co")), eq(6L)))
-                .thenReturn(new InvitacionEnviada(21L, "ana@udea.edu.co", Instant.parse("2026-09-25T15:00:00Z"), true));
+                .thenReturn(new InvitacionEnviada(21L, "ana@udea.edu.co", Instant.parse("2026-09-25T15:00:00Z"), true, true));
+        when(administrarAccesosUseCase.invitar(eq(new DatosInvitacion("Luis", "Mora", "luis@udea.edu.co")), eq(6L)))
+                .thenReturn(new InvitacionEnviada(22L, "luis@udea.edu.co", Instant.parse("2026-09-25T15:00:00Z"), false, false));
         when(administrarAccesosUseCase.invitar(eq(new DatosInvitacion("Ana", "Zapata", "ana@gmail.com")), eq(6L)))
                 .thenThrow(new DominioCorreoNoPermitidoException("ana@gmail.com"));
 
@@ -195,7 +203,13 @@ class AccesosControllersTest {
                         .content("{\"nombres\": \"Ana\", \"apellidos\": \"Zapata\", \"correo\": \"ana@udea.edu.co\"}"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.mensaje").value("Invitación reenviada."))
-                .andExpect(jsonPath("$.datos.idUsuario").value(21));
+                .andExpect(jsonPath("$.datos.idUsuario").value(21))
+                .andExpect(jsonPath("$.datos.correoEnviado").value(true));
+        mockMvc.perform(post("/api/v1/admin/invitaciones").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nombres\": \"Luis\", \"apellidos\": \"Mora\", \"correo\": \"luis@udea.edu.co\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.mensaje").value(org.hamcrest.Matchers.startsWith("La invitación quedó registrada, pero no se pudo enviar el correo")))
+                .andExpect(jsonPath("$.datos.correoEnviado").value(false));
         mockMvc.perform(post("/api/v1/admin/invitaciones").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"nombres\": \"Ana\", \"apellidos\": \"Zapata\", \"correo\": \"ana@gmail.com\"}"))
                 .andExpect(status().isBadRequest())

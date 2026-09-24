@@ -12,8 +12,12 @@ public interface NotificacionEmailPort {
     /** Enlace para confirmar el correo de una solicitud de acceso como coordinador. */
     void enviarVerificacionSolicitud(String correo, String nombre, String token);
 
-    /** Enlace para crear la contraseña tras una aprobación o una invitación. */
-    void enviarActivacionCuenta(String correo, String nombre, String token, boolean invitacion);
+    /**
+     * Enlace para crear la contraseña tras una aprobación o una invitación.
+     *
+     * @return {@code true} si el proveedor de correo aceptó el envío
+     */
+    boolean enviarActivacionCuenta(String correo, String nombre, String token, boolean invitacion);
 
     void notificarRechazoSolicitud(String correo, String nombre, String motivo);
 
