@@ -13,6 +13,7 @@ import co.udea.semilleros.domain.model.reporte.ReporteOpcion;
 import co.udea.semilleros.domain.model.reporte.ReporteRendimiento;
 import co.udea.semilleros.domain.model.reporte.TipoUnidad;
 import co.udea.semilleros.domain.port.in.ConsultarReportesUseCase;
+import co.udea.semilleros.infrastructure.adapter.in.rest.sse.ReportesEventosPublisher;
 import co.udea.semilleros.infrastructure.config.GlobalExceptionHandler;
 import co.udea.semilleros.infrastructure.security.filter.CoordinadorPrincipal;
 import co.udea.semilleros.infrastructure.security.jwt.JwtTokenProvider;
@@ -29,7 +30,9 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -43,6 +46,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(ReportesController.class)
@@ -62,6 +66,9 @@ class ReportesControllerTest {
 
     @MockBean
     private ConsultarReportesUseCase consultarReportesUseCase;
+
+    @MockBean
+    private ReportesEventosPublisher reportesEventosPublisher;
 
     @MockBean
     private JwtTokenProvider jwtTokenProvider;
@@ -199,6 +206,17 @@ class ReportesControllerTest {
 
         mockMvc.perform(get("/api/v1/admin/reportes/exportar").param("formato", "docx"))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("GET /admin/reportes/eventos: abre el flujo SSE para el administrador (HU13)")
+    void eventosAdmin_suscribe() throws Exception {
+        autenticarComo("ADMIN", 1L);
+        when(reportesEventosPublisher.suscribir()).thenReturn(new SseEmitter());
+
+        mockMvc.perform(get("/api/v1/admin/reportes/eventos").accept(MediaType.TEXT_EVENT_STREAM))
+                .andExpect(status().isOk())
+                .andExpect(request().asyncStarted());
     }
 
     @Test

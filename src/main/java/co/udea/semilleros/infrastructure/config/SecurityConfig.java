@@ -2,6 +2,7 @@ package co.udea.semilleros.infrastructure.config;
 
 import co.udea.semilleros.infrastructure.security.filter.JwtAuthenticationFilter;
 import co.udea.semilleros.infrastructure.security.filter.RateLimitFilter;
+import jakarta.servlet.DispatcherType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -52,6 +53,8 @@ public class SecurityConfig {
             .sessionManagement(session ->
                     session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
+                // Despachos asíncronos (SSE de reportes): la petición original ya fue autorizada
+                .dispatcherTypeMatchers(DispatcherType.ASYNC).permitAll()
                 // Swagger
                 .requestMatchers(
                         "/swagger-ui/**",

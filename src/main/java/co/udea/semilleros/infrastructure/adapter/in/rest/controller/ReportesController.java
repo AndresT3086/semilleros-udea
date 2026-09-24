@@ -13,6 +13,7 @@ import co.udea.semilleros.domain.port.in.ConsultarReportesUseCase;
 import co.udea.semilleros.infrastructure.adapter.in.rest.dto.request.ReporteFiltroRequest;
 import co.udea.semilleros.infrastructure.adapter.in.rest.dto.response.ApiResponse;
 import co.udea.semilleros.infrastructure.adapter.in.rest.dto.response.PageResponse;
+import co.udea.semilleros.infrastructure.adapter.in.rest.sse.ReportesEventosPublisher;
 import co.udea.semilleros.infrastructure.security.filter.CoordinadorPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -29,6 +30,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.List;
 
@@ -50,6 +52,7 @@ public class ReportesController {
     private static final String PUBLICO = "/api/v1/reportes/publico";
 
     private final ConsultarReportesUseCase consultarReportesUseCase;
+    private final ReportesEventosPublisher reportesEventosPublisher;
 
     // ─── Administrador ──────────────────────────────────────────────────────────
 
@@ -114,6 +117,15 @@ public class ReportesController {
                 .header(HttpHeaders.CONTENT_DISPOSITION,
                         ContentDisposition.attachment().filename(archivo.nombre()).build().toString())
                 .body(archivo.contenido());
+    }
+
+    @GetMapping(value = ADMIN + "/eventos", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @PreAuthorize("hasRole('ADMIN')")
+    @SecurityRequirement(name = "bearerAuth")
+    @Operation(summary = "Eventos de actualización (SSE)", description = "Flujo Server-Sent Events que emite "
+            + "'datos-actualizados' cuando cambian los datos de los reportes.")
+    public SseEmitter eventosAdmin() {
+        return reportesEventosPublisher.suscribir();
     }
 
     // ─── Coordinador: solo sus semilleros (RN43) ────────────────────────────────
