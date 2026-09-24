@@ -1,6 +1,9 @@
 package co.udea.semilleros.infrastructure.config;
 
 import co.udea.semilleros.domain.exception.AccesoNoAutorizadoException;
+import co.udea.semilleros.domain.exception.ConflictoAccesoException;
+import co.udea.semilleros.domain.exception.EnlaceInvalidoException;
+import co.udea.semilleros.domain.exception.SolicitudAccesoInvalidaException;
 import co.udea.semilleros.domain.exception.CamposObligatoriosPendientesException;
 import co.udea.semilleros.domain.exception.CredencialesInvalidasException;
 import co.udea.semilleros.domain.exception.DatosAsistenciaInvalidosException;
@@ -20,6 +23,8 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
@@ -100,6 +105,38 @@ public class GlobalExceptionHandler {
         log.warn("Campos obligatorios pendientes: {}", ex.getMessage());
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error(ex.getErrorCode(), ex.getMessage()));
+    }
+
+    @ExceptionHandler({SolicitudAccesoInvalidaException.class, EnlaceInvalidoException.class})
+    public ResponseEntity<ApiResponse<Void>> handleAccesoInvalido(co.udea.semilleros.domain.exception.SemillerosException ex) {
+        log.warn("Registro de coordinadores: {}", ex.getErrorCode());
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error(ex.getErrorCode(), ex.getMessage()));
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiResponse<Void>> handleCuerpoInvalido(HttpMessageNotReadableException ex) {
+        log.warn("Cuerpo de petición ilegible");
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error("CUERPO_INVALIDO", "El cuerpo de la petición no es un JSON válido."));
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiResponse<Void>> handleParametroInvalido(MethodArgumentTypeMismatchException ex) {
+        log.warn("Parámetro con formato inválido: {}", ex.getName());
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error("PARAMETRO_INVALIDO", "El parámetro '" + ex.getName() + "' no tiene un valor válido."));
+    }
+
+    @ExceptionHandler(ConflictoAccesoException.class)
+    public ResponseEntity<ApiResponse<Void>> handleConflictoAcceso(ConflictoAccesoException ex) {
+        log.warn("Conflicto en accesos de coordinadores: {}", ex.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
                 .body(ApiResponse.error(ex.getErrorCode(), ex.getMessage()));
     }
 

@@ -17,6 +17,10 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+import org.springframework.web.util.HtmlUtils;
+
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 @Slf4j
 @Component
@@ -31,6 +35,17 @@ public class NotificacionEmailAdapter implements NotificacionEmailPort {
 
     @Value("${app.mail.from-name:Sistema de Semilleros UdeA}")
     private String mailFromName;
+
+    /** URL pública del frontend, para los enlaces de verificación y activación. */
+    @Value("${app.frontend.url:http://localhost:5173}")
+    private String frontendUrl;
+
+    /**
+     * Solo para desarrollo local sin SendGrid: registra en el log los enlaces que no se
+     * pudieron enviar. Nunca debe activarse en producción.
+     */
+    @Value("${app.mail.registrar-enlaces-sin-envio:false}")
+    private boolean registrarEnlacesSinEnvio;
 
     @Async
     @Override
@@ -48,6 +63,103 @@ public class NotificacionEmailAdapter implements NotificacionEmailPort {
         String cuerpo = construirCuerpoCaracterizacion(semillero);
 
         enviarCorreo(correoAdministrador, asunto, cuerpo);
+    }
+
+    @Override
+    public void enviarVerificacionSolicitud(String correo, String nombre, String token) {
+        String enlace = enlace("verificar", token);
+        enviarCorreo(correo, "Confirma tu solicitud de acceso como coordinador", plantilla(
+                "Confirma tu correo",
+                "<p>Hola " + escapar(nombre) + ",</p>"
+                        + "<p>Recibimos tu solicitud para acceder al sistema como coordinador de semillero. "
+                        + "Para que un administrador pueda revisarla, confirma que este correo es tuyo:</p>"
+                        + boton(enlace, "Confirmar mi correo")
+                        + "<p style=\"font-size: 13px; color: #666;\">El enlace vence en una hora. "
+                        + "Si no hiciste esta solicitud, ignora este mensaje.</p>"), enlace);
+    }
+
+    @Override
+    public void enviarActivacionCuenta(String correo, String nombre, String token, boolean invitacion) {
+        String enlace = enlace("activar", token);
+        String motivo = invitacion
+                ? "Un administrador te invitó a coordinar semilleros en el sistema."
+                : "Tu solicitud de acceso como coordinador fue aprobada.";
+        enviarCorreo(correo, invitacion ? "Invitación al Sistema de Semilleros UdeA" : "Tu solicitud de acceso fue aprobada",
+                plantilla("Crea tu contraseña",
+                        "<p>Hola " + escapar(nombre) + ",</p><p>" + motivo
+                                + " Para activar tu cuenta, crea tu contraseña:</p>"
+                                + boton(enlace, "Crear mi contraseña")
+                                + "<p style=\"font-size: 13px; color: #666;\">El enlace vence en 24 horas y solo "
+                                + "se puede usar una vez.</p>"), enlace);
+    }
+
+    @Override
+    public void notificarRechazoSolicitud(String correo, String nombre, String motivo) {
+        enviarCorreo(correo, "Resultado de tu solicitud de acceso", plantilla("Solicitud no aprobada",
+                "<p>Hola " + escapar(nombre) + ",</p>"
+                        + "<p>Tu solicitud de acceso como coordinador no fue aprobada por el siguiente motivo:</p>"
+                        + "<div style=\"background: #fff8e1; border-left: 4px solid #f9a825; padding: 12px 16px;\">"
+                        + escapar(motivo) + "</div>"
+                        + "<p>Si crees que se trata de un error, comunícate con la Vicerrectoría de Investigación.</p>"),
+                null);
+    }
+
+    @Override
+    public void enviarResumenSolicitudesPendientes(String correoAdministrador, long pendientes) {
+        String enlace = frontendUrl + "/?vista=admin";
+        enviarCorreo(correoAdministrador, "Solicitudes de acceso pendientes: " + pendientes, plantilla(
+                "Solicitudes por revisar",
+                "<p>Estimado/a administrador/a,</p><p>Hay <strong>" + pendientes + "</strong> "
+                        + (pendientes == 1 ? "solicitud" : "solicitudes")
+                        + " de acceso como coordinador con el correo confirmado, esperando revisión.</p>"
+                        + boton(enlace, "Ir al panel de administración")), null);
+    }
+
+    private String enlace(String accion, String token) {
+        return frontendUrl + "/?accion=" + accion + "&token=" + URLEncoder.encode(token, StandardCharsets.UTF_8);
+    }
+
+    private void enviarCorreo(String destinatario, String asunto, String cuerpo, String enlace) {
+        if (enlace != null && registrarEnlacesSinEnvio && (sendGridApiKey == null || sendGridApiKey.isBlank())) {
+            log.info("[desarrollo] Enlace no enviado por correo: {}", enlace);
+        }
+        enviarCorreo(destinatario, asunto, cuerpo);
+    }
+
+    private static String boton(String enlace, String texto) {
+        return "<p style=\"text-align: center; margin: 28px 0;\"><a href=\"" + escapar(enlace) + "\" "
+                + "style=\"background: #3d5a1e; color: white; padding: 12px 24px; border-radius: 6px; "
+                + "text-decoration: none; font-weight: bold;\">" + texto + "</a></p>"
+                + "<p style=\"font-size: 12px; color: #777; word-break: break-all;\">Si el botón no funciona, copia este "
+                + "enlace en tu navegador:<br>" + escapar(enlace) + "</p>";
+    }
+
+    private static String plantilla(String titulo, String contenido) {
+        return """
+                <!DOCTYPE html>
+                <html lang="es">
+                <head><meta charset="UTF-8"></head>
+                <body style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto;">
+                  <div style="background-color: #3d5a1e; padding: 20px; text-align: center;">
+                    <h1 style="color: white; margin: 0; font-size: 20px;">Sistema de Semilleros de Investigación</h1>
+                    <p style="color: #cde; margin: 5px 0 0 0; font-size: 14px;">Universidad de Antioquia</p>
+                  </div>
+                  <div style="padding: 30px 20px;">
+                    <h2 style="color: #3d5a1e; font-size: 18px;">%s</h2>
+                    %s
+                  </div>
+                  <div style="background: #f0f0f0; padding: 15px 20px; text-align: center; font-size: 12px; color: #777;">
+                    Sistema de Semilleros — Universidad de Antioquia<br>
+                    Este es un mensaje automático, por favor no responder a este correo.
+                  </div>
+                </body>
+                </html>
+                """.formatted(titulo, contenido);
+    }
+
+    /** Los datos escritos por usuarios se escapan para que no inyecten HTML en el correo. */
+    static String escapar(String texto) {
+        return texto == null ? "" : HtmlUtils.htmlEscape(texto);
     }
 
     private void enviarCorreo(String destinatario, String asunto, String cuerpo) {
