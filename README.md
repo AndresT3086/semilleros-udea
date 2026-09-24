@@ -167,6 +167,9 @@ mvn spring-boot:run -Pdev
 | `GET`/`PATCH` | `/api/v1/coordinador/semilleros/{id}/pestana/actividades` | Consultar / guardar pestaña Actividades |
 | `GET`/`PATCH` | `/api/v1/coordinador/semilleros/{id}/pestana/dofa` | Consultar / guardar pestaña DOFA |
 | `GET`/`PATCH` | `/api/v1/coordinador/semilleros/{id}/pestana/ods` | Consultar / guardar pestaña ODS |
+| `GET`/`POST` | `/api/v1/coordinador/semilleros/{id}/sesiones` | Listar (`periodo`) / registrar actividad con su lista de asistencia |
+| `GET`/`PUT`/`DELETE` | `/api/v1/coordinador/semilleros/sesiones/{idSesion}` | Detalle / corregir / eliminar actividad |
+| `GET` | `/api/v1/coordinador/semilleros/{id}/asistencia/integrantes` | % de asistencia por integrante (`periodo`) |
 | `GET` | `/api/v1/coordinador/reportes/dashboard` | Reportes calculados solo con los semilleros del coordinador |
 | `GET` | `/api/v1/coordinador/reportes/rendimiento` | Rendimiento de los semilleros del coordinador |
 | `GET` | `/api/v1/coordinador/reportes/semilleros` | Semilleros activos del coordinador para filtrar |
@@ -184,6 +187,9 @@ Todos aceptan los filtros `periodo` (`2025`, `2025-1`, `2025-2`), `tipoUnidad`
 | `GET` | `/api/v1/admin/reportes/semilleros` | Semilleros activos para el filtro |
 | `GET` | `/api/v1/admin/reportes/exportar?formato=xlsx\|pdf\|csv` | Descarga `reporte_sigsi_AAAA-MM-DD_HHMM.<ext>` |
 | `GET` | `/api/v1/admin/reportes/eventos` | Server-Sent Events: emite `datos-actualizados` cuando cambian los datos |
+
+Asistencia: % = presentes / (presentes + ausentes) × 100. Las ausencias `EXCUSADO` se descuentan del total
+esperado y los totales por unidad, campus o programa suman asistencias (no promedian porcentajes).
 
 Roles: la columna `coordinador.rol` admite `ADMIN` o `COORDINADOR` (migración `V8`) y viaja en el
 claim `rol` del JWT. Para crear otro administrador: `UPDATE coordinador SET rol = 'ADMIN' WHERE correo = '...'`.
