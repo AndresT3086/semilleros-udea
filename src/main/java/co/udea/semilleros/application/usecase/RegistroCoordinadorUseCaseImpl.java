@@ -84,6 +84,7 @@ public class RegistroCoordinadorUseCaseImpl implements RegistroCoordinadorUseCas
 
         Instant ahora = clock.instant();
         if (usuarioRepositoryPort.buscarPorCorreo(correo).isPresent()) {
+            log.info("Solicitud de acceso sin envío: ya existe una cuenta para {}", enmascarar(correo));
             return;
         }
         boolean rechazoVigente = solicitudAccesoRepositoryPort.buscarUltimaRechazada(correo, datos.cedula())
@@ -91,6 +92,7 @@ public class RegistroCoordinadorUseCaseImpl implements RegistroCoordinadorUseCas
                         || rechazada.fechaRevision().plus(Duration.ofDays(diasEsperaRechazo)).isAfter(ahora))
                 .isPresent();
         if (rechazoVigente) {
+            log.info("Solicitud de acceso sin envío: {} tiene un rechazo vigente o está bloqueado", enmascarar(correo));
             return;
         }
 
@@ -103,6 +105,8 @@ public class RegistroCoordinadorUseCaseImpl implements RegistroCoordinadorUseCas
         // Otra persona con la misma cédula, o solicitud ya confirmada: no se toca
         if (!actual.correo().equals(correo) || actual.estado() != EstadoSolicitud.PENDIENTE_VERIFICACION
                 || !puedeReenviar(actual, ahora)) {
+            log.info("Solicitud de acceso sin envío: ya hay una solicitud en curso para {} (estado {}) o se alcanzó el límite de reenvíos",
+                    enmascarar(correo), actual.estado());
             return;
         }
         int envios = mismoDia(actual.ultimoEnvio(), ahora) ? actual.enviosVerificacion() + 1 : 1;
@@ -143,6 +147,12 @@ public class RegistroCoordinadorUseCaseImpl implements RegistroCoordinadorUseCas
         if (solicitudAccesoRepositoryPort.crear(nueva) != null) {
             notificacionEmailPort.enviarVerificacionSolicitud(correo, nueva.nombreCompleto(), token.valor());
         }
+    }
+
+    // Deja rastro en el log sin exponer el correo completo
+    private static String enmascarar(String correo) {
+        int arroba = correo.indexOf('@');
+        return arroba <= 2 ? "***" + correo.substring(Math.max(arroba, 0)) : correo.substring(0, 2) + "***" + correo.substring(arroba);
     }
 
     private boolean puedeReenviar(SolicitudAcceso solicitud, Instant ahora) {
