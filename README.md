@@ -147,6 +147,9 @@ mvn spring-boot:run -Pdev
 | `GET` | `/api/v1/filtros/areas-ocde` | Filtros de áreas OCDE |
 | `GET` | `/api/v1/auth/captcha-math` | Obtener desafío anti-bot |
 | `POST` | `/api/v1/auth/login` | Autenticar coordinador o administrador |
+| `POST` | `/api/v1/solicitudes-acceso` | Solicitar cuenta de coordinador (responde siempre `202` con un mensaje genérico) |
+| `POST` | `/api/v1/solicitudes-acceso/verificar` | Confirmar el correo con el token del enlace (`{ "token" }`) |
+| `POST` | `/api/v1/cuenta/activar` | Crear la contraseña con el enlace de aprobación o invitación (`{ "token", "contrasena" }`) |
 
 ### Protegidos (requieren `Authorization: Bearer <token>`)
 
@@ -195,6 +198,30 @@ La columna `usuario.rol` admite `ADMIN` o `COORDINADOR` y viaja en el claim `rol
 Para crear otro administrador: `UPDATE usuario SET rol = 'ADMIN' WHERE correo = '...'`.
 Los reportes requieren sesión: `ADMIN` ve los generales y cada `COORDINADOR` solo los de sus semilleros.
 
+#### Registro de coordinadores
+
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| `GET` | `/api/v1/admin/solicitudes-acceso?estado=PENDIENTE` | Solicitudes con el correo ya confirmado (por defecto `PENDIENTE`) |
+| `GET` | `/api/v1/admin/solicitudes-acceso/resumen` | Número de solicitudes por revisar |
+| `POST` | `/api/v1/admin/solicitudes-acceso/{id}/aprobar` | Crea la cuenta inactiva y envía el enlace de activación (24 h) |
+| `POST` | `/api/v1/admin/solicitudes-acceso/{id}/rechazar` | `{ "motivo", "bloquear" }`: notifica el motivo; `bloquear` impide volver a solicitar |
+| `POST` | `/api/v1/admin/invitaciones` | `{ "nombres", "apellidos", "correo" }`: invita directamente (solo `@udea.edu.co`); reenviar invalida el enlace anterior |
+
+Flujo: formulario en «Acceso SIGSI → Solicitar acceso» → correo de confirmación (1 h) → revisión del
+administrador → enlace para crear la contraseña (24 h, un solo uso). Capas contra abuso: dominio
+`@udea.edu.co`, captcha matemático, campo trampa, límite por IP (3 solicitudes/hora), una solicitud en curso por
+correo y cédula, reenvíos cada 10 min (máx. 3/día), espera de 30 días tras un rechazo, respuestas genéricas que no
+revelan si un correo existe, y limpieza horaria de solicitudes y enlaces vencidos. Los tokens solo se guardan como
+hash SHA-256.
+
+Propiedades (`application.properties`): `app.frontend.url` (variable `FRONTEND_URL`, base de los enlaces de los
+correos), `app.accesos.verificacion-horas`, `app.accesos.activacion-horas`, `app.accesos.minutos-entre-envios`,
+`app.accesos.max-envios-dia`, `app.accesos.espera-rechazo-dias`, `app.accesos.limpieza-cron` y
+`app.accesos.resumen-cron` (resumen diario de pendientes a los administradores). En el perfil `dev`,
+`app.mail.registrar-enlaces-sin-envio=true` escribe los enlaces en el log cuando no hay clave de SendGrid;
+**nunca** debe activarse en producción.
+
 ---
 
 ## Seguridad
@@ -202,7 +229,7 @@ Los reportes requieren sesión: `ADMIN` ve los generales y cada `COORDINADOR` so
 - **JWT** con firma HMAC-SHA256 (≥ 256 bits de secreto).
 - **Dominio restringido**: solo `@udea.edu.co` para el login de coordinadores. La inscripción de
   estudiantes (`POST /api/v1/inscripciones`) no restringe el dominio del correo.
-- **Anti-bot**: operación matemática requerida en login.
+- **Anti-bot**: operación matemática requerida en login y en la solicitud de acceso.
 - **Contraseñas hasheadas** con BCrypt (factor 12).
 - **Anti-inyección SQL**: uso exclusivo de JPA con parámetros nombrados (sin SQL concatenado).
 - **CORS** configurable por ambiente.
