@@ -100,6 +100,9 @@ class AccesosControllersTest {
                 .andExpect(jsonPath("$.datos.cedula").exists())
                 .andExpect(jsonPath("$.datos.justificacion").exists())
                 .andExpect(jsonPath("$.datos.correo").exists());
+        mockMvc.perform(post("/api/v1/solicitudes-acceso").contentType(MediaType.APPLICATION_JSON).content("{no es json"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.codigoError").value("CUERPO_INVALIDO"));
         doThrow(new DominioCorreoNoPermitidoException("ana@gmail.com")).when(registroCoordinadorUseCase).solicitarAcceso(any());
         mockMvc.perform(post("/api/v1/solicitudes-acceso").contentType(MediaType.APPLICATION_JSON).content(SOLICITUD))
                 .andExpect(status().isBadRequest());
