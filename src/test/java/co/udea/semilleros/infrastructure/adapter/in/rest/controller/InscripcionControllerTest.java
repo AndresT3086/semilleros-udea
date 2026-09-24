@@ -19,6 +19,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -128,5 +129,34 @@ class InscripcionControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("POST /inscripciones: debe retornar 400 cuando el sexo no es un valor permitido")
+    void inscribirse_conSexoInvalido_retorna400() throws Exception {
+        String body = BODY_VALIDO.replace("\"aceptaTerminos\": true", "\"aceptaTerminos\": true, \"sexo\": \"X\"");
+
+        mockMvc.perform(post("/api/v1/inscripciones")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.datos.sexo").exists());
+    }
+
+    @Test
+    @DisplayName("POST /inscripciones: el sexo vacío se envía como no informado (null)")
+    void inscribirse_conSexoVacio_loNormalizaANull() throws Exception {
+        Inscripcion dominio = Inscripcion.builder().idSemillero(1L).build();
+        when(semilleroRestMapper.toInscripcionDomain(argThat(request -> request != null && request.getSexo() == null)))
+                .thenReturn(dominio);
+        when(inscribirseASemilleroUseCase.inscribir(dominio)).thenReturn(dominio.withId(1L));
+        when(semilleroRestMapper.toInscripcionResponse(any()))
+                .thenReturn(InscripcionResponse.builder().id(1L).estado("PENDIENTE").build());
+        String body = BODY_VALIDO.replace("\"aceptaTerminos\": true", "\"aceptaTerminos\": true, \"sexo\": \"\"");
+
+        mockMvc.perform(post("/api/v1/inscripciones")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isCreated());
     }
 }
