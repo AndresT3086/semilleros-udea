@@ -8,4 +8,5 @@ import lombok.Getter;
 public class CoordinadorPrincipal {
     private final Long id;
     private final String correo;
+    private final String rol;
 }

@@ -32,13 +32,14 @@ public class JwtTokenProvider {
         this.secretKey = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
     }
 
-    public String generarToken(Long idCoordinador, String correo) {
+    public String generarToken(Long idCoordinador, String correo, String rol) {
         Date ahora = new Date();
         Date expiracion = new Date(ahora.getTime() + jwtExpirationMs);
 
         return Jwts.builder()
                 .subject(correo)
                 .claim("idCoordinador", idCoordinador)
+                .claim("rol", rol)
                 .issuedAt(ahora)
                 .expiration(expiracion)
                 .signWith(secretKey)
@@ -52,6 +53,10 @@ public class JwtTokenProvider {
     public Long extraerIdCoordinador(String token) {
         Claims claims = parsearClaims(token);
         return claims.get("idCoordinador", Long.class);
+    }
+
+    public String extraerRol(String token) {
+        return parsearClaims(token).get("rol", String.class);
     }
 
     public boolean esTokenValido(String token) {
