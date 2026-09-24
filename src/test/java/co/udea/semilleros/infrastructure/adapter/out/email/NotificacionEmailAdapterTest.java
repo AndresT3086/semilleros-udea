@@ -105,4 +105,30 @@ class NotificacionEmailAdapterTest {
                 adapter.notificarFinalizacionCaracterizacion(semillero, "admin@udea.edu.co"))
                 .doesNotThrowAnyException();
     }
+
+    // ─── Registro de coordinadores ─────────────────────────────────────────────
+
+    @Test
+    @DisplayName("Correos de solicitudes de acceso: no fallan sin API Key, incluso registrando los enlaces en desarrollo")
+    void correosDeAcceso_sinApiKey_noLanzanExcepcion() {
+        ReflectionTestUtils.setField(adapter, "frontendUrl", "http://localhost:5173");
+        ReflectionTestUtils.setField(adapter, "registrarEnlacesSinEnvio", true);
+
+        assertThatCode(() -> {
+            adapter.enviarVerificacionSolicitud("ana@udea.edu.co", "Ana", "token+/=");
+            adapter.enviarActivacionCuenta("ana@udea.edu.co", "Ana", "token", true);
+            adapter.enviarActivacionCuenta("ana@udea.edu.co", "Ana", "token", false);
+            adapter.notificarRechazoSolicitud("ana@udea.edu.co", "Ana", "Motivo");
+            adapter.enviarResumenSolicitudesPendientes("admin@udea.edu.co", 1);
+            adapter.enviarResumenSolicitudesPendientes("admin@udea.edu.co", 3);
+        }).doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("escapar: los datos escritos por usuarios no inyectan HTML en el correo")
+    void escapar_evitaInyeccionHtml() {
+        org.assertj.core.api.Assertions.assertThat(NotificacionEmailAdapter.escapar("<script>alert('x')</script>"))
+                .isEqualTo("&lt;script&gt;alert(&#39;x&#39;)&lt;/script&gt;");
+        org.assertj.core.api.Assertions.assertThat(NotificacionEmailAdapter.escapar(null)).isEmpty();
+    }
 }
