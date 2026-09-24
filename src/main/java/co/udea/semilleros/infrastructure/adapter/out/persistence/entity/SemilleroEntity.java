@@ -78,7 +78,7 @@ public class SemilleroEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_coordinador")
-    private CoordinadorEntity coordinador;
+    private UsuarioEntity coordinador;
 
     @CreationTimestamp
     @Column(name = "fecha_creacion", updatable = false)

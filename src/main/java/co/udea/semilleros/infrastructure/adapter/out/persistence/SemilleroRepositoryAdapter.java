@@ -24,7 +24,7 @@ public class SemilleroRepositoryAdapter implements SemilleroRepositoryPort {
     private final UnidadAcademicaJpaRepository unidadAcademicaJpaRepository;
     private final CampusJpaRepository campusJpaRepository;
     private final AreaOcdeJpaRepository areaOcdeJpaRepository;
-    private final CoordinadorJpaRepository coordinadorJpaRepository;
+    private final UsuarioJpaRepository usuarioJpaRepository;
 
     @Override
     public PageResult<Semillero> buscarActivos(SemilleroFiltro filtro) {
@@ -149,7 +149,7 @@ public class SemilleroRepositoryAdapter implements SemilleroRepositoryPort {
                     .ifPresent(entity::setAreaOcde);
         }
         if (semillero.getIdCoordinador() != null) {
-            coordinadorJpaRepository.findById(semillero.getIdCoordinador())
+            usuarioJpaRepository.findById(semillero.getIdCoordinador())
                     .ifPresent(entity::setCoordinador);
         }
     }

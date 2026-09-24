@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 @Getter
 @Builder
 @With
-public class Coordinador {
+public class Usuario {
 
     private final Long id;
     private final String nombres;

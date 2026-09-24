@@ -10,7 +10,7 @@ import co.udea.semilleros.infrastructure.adapter.in.rest.dto.response.PestanaGen
 import co.udea.semilleros.infrastructure.adapter.in.rest.dto.response.SemilleroDetalleResponse;
 import co.udea.semilleros.infrastructure.adapter.in.rest.mapper.SemilleroRestMapper;
 import co.udea.semilleros.infrastructure.config.GlobalExceptionHandler;
-import co.udea.semilleros.infrastructure.security.filter.CoordinadorPrincipal;
+import co.udea.semilleros.infrastructure.security.filter.UsuarioPrincipal;
 import co.udea.semilleros.infrastructure.security.jwt.JwtTokenProvider;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -56,8 +56,8 @@ class CoordinadorSemilleroControllerTest {
     @MockBean
     private JwtTokenProvider jwtTokenProvider;
 
-    private static final CoordinadorPrincipal PRINCIPAL =
-            new CoordinadorPrincipal(5L, "coordinador@udea.edu.co", "COORDINADOR");
+    private static final UsuarioPrincipal PRINCIPAL =
+            new UsuarioPrincipal(5L, "coordinador@udea.edu.co", "COORDINADOR");
 
     // Con addFilters=false la cadena de seguridad real no corre (ni JwtAuthenticationFilter
     // ni el TestSecurityContextHolderFilter de spring-security-test), así que el

@@ -147,7 +147,6 @@ mvn spring-boot:run -Pdev
 | `GET` | `/api/v1/filtros/areas-ocde` | Filtros de áreas OCDE |
 | `GET` | `/api/v1/auth/captcha-math` | Obtener desafío anti-bot |
 | `POST` | `/api/v1/auth/login` | Autenticar coordinador o administrador |
-| `GET` | `/api/v1/reportes/publico/dashboard` | Estadísticas agregadas y anónimas del programa |
 
 ### Protegidos (requieren `Authorization: Bearer <token>`)
 
@@ -191,8 +190,10 @@ Todos aceptan los filtros `periodo` (`2025`, `2025-1`, `2025-2`), `tipoUnidad`
 Asistencia: % = presentes / (presentes + ausentes) × 100. Las ausencias `EXCUSADO` se descuentan del total
 esperado y los totales por unidad, campus o programa suman asistencias (no promedian porcentajes).
 
-Roles: la columna `coordinador.rol` admite `ADMIN` o `COORDINADOR` (migración `V8`) y viaja en el
-claim `rol` del JWT. Para crear otro administrador: `UPDATE coordinador SET rol = 'ADMIN' WHERE correo = '...'`.
+Usuarios y roles: las cuentas están en la tabla `usuario` (renombrada desde `coordinador` en la migración `V11`).
+La columna `usuario.rol` admite `ADMIN` o `COORDINADOR` y viaja en el claim `rol` del JWT junto con `idUsuario`.
+Para crear otro administrador: `UPDATE usuario SET rol = 'ADMIN' WHERE correo = '...'`.
+Los reportes requieren sesión: `ADMIN` ve los generales y cada `COORDINADOR` solo los de sus semilleros.
 
 ---
 

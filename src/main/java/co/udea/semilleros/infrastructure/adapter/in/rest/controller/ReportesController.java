@@ -14,7 +14,7 @@ import co.udea.semilleros.infrastructure.adapter.in.rest.dto.request.ReporteFilt
 import co.udea.semilleros.infrastructure.adapter.in.rest.dto.response.ApiResponse;
 import co.udea.semilleros.infrastructure.adapter.in.rest.dto.response.PageResponse;
 import co.udea.semilleros.infrastructure.adapter.in.rest.sse.ReportesEventosPublisher;
-import co.udea.semilleros.infrastructure.security.filter.CoordinadorPrincipal;
+import co.udea.semilleros.infrastructure.security.filter.UsuarioPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -135,7 +135,7 @@ public class ReportesController {
             + "solo sobre los semilleros del coordinador autenticado.")
     public ResponseEntity<ApiResponse<ReporteDashboard>> dashboardCoordinador(
             @ModelAttribute ReporteFiltroRequest filtro,
-            @AuthenticationPrincipal CoordinadorPrincipal principal
+            @AuthenticationPrincipal UsuarioPrincipal principal
     ) {
         return ResponseEntity.ok(ApiResponse.exito(
                 consultarReportesUseCase.obtenerDashboard(filtro.toFiltro().paraCoordinador(principal.getId()))));
@@ -147,7 +147,7 @@ public class ReportesController {
     @Operation(summary = "Rendimiento de los semilleros del coordinador")
     public ResponseEntity<ApiResponse<PageResponse<ReporteRendimiento>>> rendimientoCoordinador(
             @ModelAttribute ReporteFiltroRequest filtro,
-            @AuthenticationPrincipal CoordinadorPrincipal principal,
+            @AuthenticationPrincipal UsuarioPrincipal principal,
             @RequestParam(defaultValue = "0") int pagina,
             @RequestParam(defaultValue = "15") int tamano,
             @RequestParam(required = false) String orden,
@@ -162,7 +162,7 @@ public class ReportesController {
     @Operation(summary = "Semilleros activos del coordinador para el filtro")
     public ResponseEntity<ApiResponse<List<ReporteOpcion>>> semillerosCoordinador(
             @ModelAttribute ReporteFiltroRequest filtro,
-            @AuthenticationPrincipal CoordinadorPrincipal principal
+            @AuthenticationPrincipal UsuarioPrincipal principal
     ) {
         return ResponseEntity.ok(ApiResponse.exito(
                 consultarReportesUseCase.listarSemilleros(filtro.toFiltro().paraCoordinador(principal.getId()))));

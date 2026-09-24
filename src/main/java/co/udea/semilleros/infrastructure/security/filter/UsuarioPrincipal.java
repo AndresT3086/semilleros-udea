@@ -5,7 +5,7 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public class CoordinadorPrincipal {
+public class UsuarioPrincipal {
     private final Long id;
     private final String correo;
     private final String rol;

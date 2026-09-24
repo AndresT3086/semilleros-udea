@@ -33,7 +33,7 @@ class SemilleroRepositoryAdapterTest {
     @Mock private UnidadAcademicaJpaRepository unidadAcademicaJpaRepository;
     @Mock private CampusJpaRepository campusJpaRepository;
     @Mock private AreaOcdeJpaRepository areaOcdeJpaRepository;
-    @Mock private CoordinadorJpaRepository coordinadorJpaRepository;
+    @Mock private UsuarioJpaRepository usuarioJpaRepository;
 
     private final SemilleroEntityMapperImpl semilleroEntityMapper = new SemilleroEntityMapperImpl();
 
@@ -41,7 +41,7 @@ class SemilleroRepositoryAdapterTest {
         return new SemilleroRepositoryAdapter(
                 semilleroJpaRepository, semilleroEntityMapper,
                 unidadAcademicaJpaRepository, campusJpaRepository,
-                areaOcdeJpaRepository, coordinadorJpaRepository);
+                areaOcdeJpaRepository, usuarioJpaRepository);
     }
 
     private SemilleroEntity entidadBase() {
@@ -180,8 +180,8 @@ class SemilleroRepositoryAdapterTest {
                 .thenReturn(Optional.of(CampusEntity.builder().id(2L).nombre("Central").build()));
         when(areaOcdeJpaRepository.findById(3L))
                 .thenReturn(Optional.of(AreaOcdeEntity.builder().id(3L).nombre("Biología").build()));
-        when(coordinadorJpaRepository.findById(4L))
-                .thenReturn(Optional.of(CoordinadorEntity.builder().id(4L).correo("c@udea.edu.co").build()));
+        when(usuarioJpaRepository.findById(4L))
+                .thenReturn(Optional.of(UsuarioEntity.builder().id(4L).correo("c@udea.edu.co").build()));
         when(semilleroJpaRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         // ACT

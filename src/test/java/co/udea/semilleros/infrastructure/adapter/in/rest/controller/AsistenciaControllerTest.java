@@ -10,7 +10,7 @@ import co.udea.semilleros.domain.model.asistencia.Sesion;
 import co.udea.semilleros.domain.model.asistencia.SesionDetalle;
 import co.udea.semilleros.domain.port.in.GestionarAsistenciaUseCase;
 import co.udea.semilleros.infrastructure.config.GlobalExceptionHandler;
-import co.udea.semilleros.infrastructure.security.filter.CoordinadorPrincipal;
+import co.udea.semilleros.infrastructure.security.filter.UsuarioPrincipal;
 import co.udea.semilleros.infrastructure.security.jwt.JwtTokenProvider;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
@@ -76,7 +76,7 @@ class AsistenciaControllerTest {
 
     private static void autenticarComo(String rol) {
         SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(
-                new CoordinadorPrincipal(5L, "c@udea.edu.co", rol), null, List.of(new SimpleGrantedAuthority("ROLE_" + rol))));
+                new UsuarioPrincipal(5L, "c@udea.edu.co", rol), null, List.of(new SimpleGrantedAuthority("ROLE_" + rol))));
     }
 
     @AfterEach

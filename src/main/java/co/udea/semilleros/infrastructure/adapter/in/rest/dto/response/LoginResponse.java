@@ -9,5 +9,5 @@ public class LoginResponse {
     private String token;
     private String tipo;
     private String correo;
-    private Long idCoordinador;
+    private Long idUsuario;
 }

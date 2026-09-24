@@ -3,8 +3,8 @@ package co.udea.semilleros.application.usecase;
 import co.udea.semilleros.domain.exception.CredencialesInvalidasException;
 import co.udea.semilleros.domain.exception.DominioCorreoNoPermitidoException;
 import co.udea.semilleros.domain.exception.ValidacionBotException;
-import co.udea.semilleros.domain.model.Coordinador;
-import co.udea.semilleros.domain.port.out.CoordinadorRepositoryPort;
+import co.udea.semilleros.domain.model.Usuario;
+import co.udea.semilleros.domain.port.out.UsuarioRepositoryPort;
 import co.udea.semilleros.infrastructure.security.jwt.JwtTokenProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -25,18 +25,18 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("AutenticarCoordinadorUseCase - Pruebas unitarias")
-class AutenticarCoordinadorUseCaseImplTest {
+@DisplayName("AutenticarUsuarioUseCase - Pruebas unitarias")
+class AutenticarUsuarioUseCaseImplTest {
 
     @Mock
-    private CoordinadorRepositoryPort coordinadorRepositoryPort;
+    private UsuarioRepositoryPort usuarioRepositoryPort;
     @Mock
     private PasswordEncoder passwordEncoder;
     @Mock
     private JwtTokenProvider jwtTokenProvider;
 
     @InjectMocks
-    private AutenticarCoordinadorUseCaseImpl useCase;
+    private AutenticarUsuarioUseCaseImpl useCase;
 
     @BeforeEach
     void setUp() {
@@ -53,7 +53,7 @@ class AutenticarCoordinadorUseCaseImplTest {
         String password = "clave-de-prueba-no-real";
         String tokenEsperado = "eyJhbGciOiJIUzI1NiJ9.test.token";
 
-        Coordinador coordinador = Coordinador.builder()
+        Usuario coordinador = Usuario.builder()
                 .id(1L)
                 .correo(correo)
                 .passwordHash("hash-mockeado-de-prueba")
@@ -61,7 +61,7 @@ class AutenticarCoordinadorUseCaseImplTest {
                 .activo(true)
                 .build();
 
-        when(coordinadorRepositoryPort.buscarPorCorreo(correo)).thenReturn(Optional.of(coordinador));
+        when(usuarioRepositoryPort.buscarPorCorreo(correo)).thenReturn(Optional.of(coordinador));
         when(passwordEncoder.matches(eq(password), any())).thenReturn(true);
         when(jwtTokenProvider.generarToken(1L, correo, "COORDINADOR")).thenReturn(tokenEsperado);
 
@@ -107,7 +107,7 @@ class AutenticarCoordinadorUseCaseImplTest {
     void autenticar_conCorreoInexistente_lanzaExcepcion() {
         // ARRANGE
         String correo = "noexiste@udea.edu.co";
-        when(coordinadorRepositoryPort.buscarPorCorreo(correo)).thenReturn(Optional.empty());
+        when(usuarioRepositoryPort.buscarPorCorreo(correo)).thenReturn(Optional.empty());
 
         // ACT & ASSERT
         assertThatThrownBy(() -> useCase.autenticar(correo, "pass", 8, 5, 3))
@@ -119,14 +119,14 @@ class AutenticarCoordinadorUseCaseImplTest {
     void autenticar_conPasswordIncorrecta_lanzaExcepcion() {
         // ARRANGE
         String correo = "coordinador@udea.edu.co";
-        Coordinador coordinador = Coordinador.builder()
+        Usuario coordinador = Usuario.builder()
                 .id(1L)
                 .correo(correo)
                 .passwordHash("hash-mockeado-de-prueba")
                 .activo(true)
                 .build();
 
-        when(coordinadorRepositoryPort.buscarPorCorreo(correo)).thenReturn(Optional.of(coordinador));
+        when(usuarioRepositoryPort.buscarPorCorreo(correo)).thenReturn(Optional.of(coordinador));
         when(passwordEncoder.matches(any(), any())).thenReturn(false);
 
         // ACT & ASSERT
@@ -139,14 +139,14 @@ class AutenticarCoordinadorUseCaseImplTest {
     void autenticar_conCoordinadorInactivo_lanzaExcepcion() {
         // ARRANGE
         String correo = "coordinador@udea.edu.co";
-        Coordinador coordinadorInactivo = Coordinador.builder()
+        Usuario coordinadorInactivo = Usuario.builder()
                 .id(1L)
                 .correo(correo)
                 .passwordHash("hash-mockeado-de-prueba")
                 .activo(false)
                 .build();
 
-        when(coordinadorRepositoryPort.buscarPorCorreo(correo)).thenReturn(Optional.of(coordinadorInactivo));
+        when(usuarioRepositoryPort.buscarPorCorreo(correo)).thenReturn(Optional.of(coordinadorInactivo));
 
         // ACT & ASSERT
         assertThatThrownBy(() -> useCase.autenticar(correo, "clave-de-prueba-no-real", 8, 5, 3))

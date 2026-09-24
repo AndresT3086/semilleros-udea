@@ -17,7 +17,7 @@ import co.udea.semilleros.domain.model.reporte.TipoUnidad;
 import co.udea.semilleros.domain.port.in.ConsultarReportesUseCase;
 import co.udea.semilleros.infrastructure.adapter.in.rest.sse.ReportesEventosPublisher;
 import co.udea.semilleros.infrastructure.config.GlobalExceptionHandler;
-import co.udea.semilleros.infrastructure.security.filter.CoordinadorPrincipal;
+import co.udea.semilleros.infrastructure.security.filter.UsuarioPrincipal;
 import co.udea.semilleros.infrastructure.security.jwt.JwtTokenProvider;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
@@ -84,7 +84,7 @@ class ReportesControllerTest {
 
     private static void autenticarComo(String rol, Long id) {
         SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(
-                new CoordinadorPrincipal(id, "usuario@udea.edu.co", rol), null,
+                new UsuarioPrincipal(id, "usuario@udea.edu.co", rol), null,
                 List.of(new SimpleGrantedAuthority("ROLE_" + rol))));
     }
 

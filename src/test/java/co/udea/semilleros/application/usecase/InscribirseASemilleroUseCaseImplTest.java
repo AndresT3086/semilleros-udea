@@ -2,10 +2,10 @@ package co.udea.semilleros.application.usecase;
 
 import co.udea.semilleros.domain.exception.InscripcionDuplicadaException;
 import co.udea.semilleros.domain.exception.RecursoNoEncontradoException;
-import co.udea.semilleros.domain.model.Coordinador;
+import co.udea.semilleros.domain.model.Usuario;
 import co.udea.semilleros.domain.model.Inscripcion;
 import co.udea.semilleros.domain.model.Semillero;
-import co.udea.semilleros.domain.port.out.CoordinadorRepositoryPort;
+import co.udea.semilleros.domain.port.out.UsuarioRepositoryPort;
 import co.udea.semilleros.domain.port.out.InscripcionRepositoryPort;
 import co.udea.semilleros.domain.port.out.NotificacionEmailPort;
 import co.udea.semilleros.domain.port.out.SemilleroRepositoryPort;
@@ -35,7 +35,7 @@ class InscribirseASemilleroUseCaseImplTest {
     @Mock
     private SemilleroRepositoryPort semilleroRepositoryPort;
     @Mock
-    private CoordinadorRepositoryPort coordinadorRepositoryPort;
+    private UsuarioRepositoryPort usuarioRepositoryPort;
     @Mock
     private NotificacionEmailPort notificacionEmailPort;
 
@@ -64,7 +64,7 @@ class InscribirseASemilleroUseCaseImplTest {
                 .idCoordinador(10L)
                 .build();
 
-        Coordinador coordinador = Coordinador.builder()
+        Usuario coordinador = Usuario.builder()
                 .id(10L)
                 .correo("coordinador@udea.edu.co")
                 .build();
@@ -76,7 +76,7 @@ class InscribirseASemilleroUseCaseImplTest {
         when(semilleroRepositoryPort.buscarPorId(1L)).thenReturn(Optional.of(semillero));
         when(inscripcionRepositoryPort.existeInscripcionActivaPorCorreoYSemillero(any(), any())).thenReturn(false);
         when(inscripcionRepositoryPort.guardar(any())).thenReturn(guardada);
-        when(coordinadorRepositoryPort.buscarPorId(10L)).thenReturn(Optional.of(coordinador));
+        when(usuarioRepositoryPort.buscarPorId(10L)).thenReturn(Optional.of(coordinador));
 
         // ACT
         Inscripcion resultado = useCase.inscribir(request);
@@ -109,7 +109,7 @@ class InscribirseASemilleroUseCaseImplTest {
                 .idCoordinador(10L)
                 .build();
 
-        Coordinador coordinador = Coordinador.builder()
+        Usuario coordinador = Usuario.builder()
                 .id(10L)
                 .correo("coordinador@udea.edu.co")
                 .build();
@@ -122,7 +122,7 @@ class InscribirseASemilleroUseCaseImplTest {
                 .thenReturn(Optional.of(semillero));
         when(inscripcionRepositoryPort.existeInscripcionActivaPorCorreoYSemillero(any(), any())).thenReturn(false);
         when(inscripcionRepositoryPort.guardar(any())).thenReturn(guardada);
-        when(coordinadorRepositoryPort.buscarPorId(10L)).thenReturn(Optional.of(coordinador));
+        when(usuarioRepositoryPort.buscarPorId(10L)).thenReturn(Optional.of(coordinador));
 
         // ACT
         Inscripcion resultado = useCase.inscribir(request);

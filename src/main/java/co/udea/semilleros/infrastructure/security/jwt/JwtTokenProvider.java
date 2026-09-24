@@ -19,6 +19,9 @@ import java.util.Date;
 @Component
 public class JwtTokenProvider {
 
+    static final String CLAIM_ID_USUARIO = "idUsuario";
+    static final String CLAIM_ID_ANTERIOR = "idCoordinador";
+
     @Value("${app.security.jwt.secret}")
     private String jwtSecret;
 
@@ -32,13 +35,13 @@ public class JwtTokenProvider {
         this.secretKey = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
     }
 
-    public String generarToken(Long idCoordinador, String correo, String rol) {
+    public String generarToken(Long idUsuario, String correo, String rol) {
         Date ahora = new Date();
         Date expiracion = new Date(ahora.getTime() + jwtExpirationMs);
 
         return Jwts.builder()
                 .subject(correo)
-                .claim("idCoordinador", idCoordinador)
+                .claim(CLAIM_ID_USUARIO, idUsuario)
                 .claim("rol", rol)
                 .issuedAt(ahora)
                 .expiration(expiracion)
@@ -50,9 +53,11 @@ public class JwtTokenProvider {
         return parsearClaims(token).getSubject();
     }
 
-    public Long extraerIdCoordinador(String token) {
+    public Long extraerIdUsuario(String token) {
         Claims claims = parsearClaims(token);
-        return claims.get("idCoordinador", Long.class);
+        Long idUsuario = claims.get(CLAIM_ID_USUARIO, Long.class);
+        // Tokens emitidos antes del cambio de nombre (vigentes hasta su expiración)
+        return idUsuario != null ? idUsuario : claims.get(CLAIM_ID_ANTERIOR, Long.class);
     }
 
     public String extraerRol(String token) {
