@@ -75,6 +75,18 @@ class ReporteFiltroTest {
         assertThat(previo.fechaCorte()).isEqualTo(corte);
     }
 
+    @ParameterizedTest
+    @CsvSource({
+            "2025,   2025-01-01",
+            "2025-1, 2025-01-01",
+            "2025-2, 2025-07-01"
+    })
+    @DisplayName("inicioPeriodo: primer día del año o semestre para datos fechados")
+    void inicioPeriodo(String periodo, LocalDate inicio) {
+        assertThat(ReporteFiltro.de(periodo, null, null, null, null).inicioPeriodo()).isEqualTo(inicio);
+        assertThat(ReporteFiltro.de(null, null, null, null, null).inicioPeriodo()).isNull();
+    }
+
     @Test
     @DisplayName("periodoAnterior: sin período compara con el mes anterior")
     void periodoAnterior_sinPeriodo() {

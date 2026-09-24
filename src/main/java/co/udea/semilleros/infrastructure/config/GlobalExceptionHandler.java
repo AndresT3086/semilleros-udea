@@ -3,6 +3,7 @@ package co.udea.semilleros.infrastructure.config;
 import co.udea.semilleros.domain.exception.AccesoNoAutorizadoException;
 import co.udea.semilleros.domain.exception.CamposObligatoriosPendientesException;
 import co.udea.semilleros.domain.exception.CredencialesInvalidasException;
+import co.udea.semilleros.domain.exception.DatosAsistenciaInvalidosException;
 import co.udea.semilleros.domain.exception.DominioCorreoNoPermitidoException;
 import co.udea.semilleros.domain.exception.FiltroReporteInvalidoException;
 import co.udea.semilleros.domain.exception.InscripcionDuplicadaException;
@@ -97,6 +98,14 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(CamposObligatoriosPendientesException.class)
     public ResponseEntity<ApiResponse<Void>> handleCamposPendientes(CamposObligatoriosPendientesException ex) {
         log.warn("Campos obligatorios pendientes: {}", ex.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error(ex.getErrorCode(), ex.getMessage()));
+    }
+
+    @ExceptionHandler(DatosAsistenciaInvalidosException.class)
+    public ResponseEntity<ApiResponse<Void>> handleDatosAsistenciaInvalidos(DatosAsistenciaInvalidosException ex) {
+        log.warn("Datos de asistencia inválidos: {}", ex.getMessage());
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(ApiResponse.error(ex.getErrorCode(), ex.getMessage()));

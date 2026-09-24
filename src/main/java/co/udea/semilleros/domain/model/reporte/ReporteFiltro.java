@@ -68,6 +68,18 @@ public record ReporteFiltro(
         return tipo;
     }
 
+    /**
+     * Primer día del período para datos fechados (sesiones y asistencia):
+     * 1 de enero para el año o el primer semestre, 1 de julio para el segundo.
+     * Null sin período: se consideran todas las sesiones registradas.
+     */
+    public LocalDate inicioPeriodo() {
+        if (periodo == null) {
+            return null;
+        }
+        return periodo.endsWith("-2") ? LocalDate.of(anioCorte, 7, 1) : LocalDate.of(anioCorte, 1, 1);
+    }
+
     public ReporteFiltro paraCoordinador(Long idCoordinadorAutenticado) {
         return new ReporteFiltro(periodo, anioCorte, fechaCorte, tipoUnidad, idUnidad, idCampus,
                 idSemillero, AlcanceReporte.COORDINADOR, idCoordinadorAutenticado);
