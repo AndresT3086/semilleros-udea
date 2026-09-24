@@ -66,6 +66,8 @@ public class SecurityConfig {
                 // Autenticación de coordinadores
                 .requestMatchers(HttpMethod.POST, "/api/v1/auth/login").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/auth/captcha-math").permitAll()
+                // Estadísticas agregadas y anónimas (semilleristas y visitantes)
+                .requestMatchers(HttpMethod.GET, "/api/v1/reportes/publico/**").permitAll()
                 // Health check
                 .requestMatchers("/actuator/health").permitAll()
                 // Reportes y gestión exclusivos del rol administrador
@@ -91,6 +93,8 @@ public class SecurityConfig {
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
+        // Permite al front leer el nombre del archivo exportado
+        config.setExposedHeaders(List.of("Content-Disposition"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
