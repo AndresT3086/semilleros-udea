@@ -34,7 +34,8 @@ class SemilleroIntegranteRepositoryAdapterTest {
         when(semilleroJpaRepository.getReferenceById(1L)).thenReturn(semilleroRef);
 
         // ACT
-        adapter().registrarIntegrante(1L, "Juan", "Pérez", "123", "juan@udea.edu.co", "ESTUDIANTE");
+        adapter().registrarIntegrante(1L, "Juan", "Pérez", "123", "juan@udea.edu.co", "MASCULINO",
+                "ESTUDIANTE_INVESTIGADOR");
 
         // ASSERT
         ArgumentCaptor<SemilleroIntegranteEntity> captor = ArgumentCaptor.forClass(SemilleroIntegranteEntity.class);
@@ -46,7 +47,8 @@ class SemilleroIntegranteRepositoryAdapterTest {
         assertThat(guardado.getApellidos()).isEqualTo("Pérez");
         assertThat(guardado.getCedula()).isEqualTo("123");
         assertThat(guardado.getCorreo()).isEqualTo("juan@udea.edu.co");
-        assertThat(guardado.getTipoVinculacion()).isEqualTo("ESTUDIANTE");
+        assertThat(guardado.getSexo()).isEqualTo("MASCULINO");
+        assertThat(guardado.getTipoVinculacion()).isEqualTo("ESTUDIANTE_INVESTIGADOR");
         assertThat(guardado.getActivo()).isTrue();
         assertThat(guardado.getFechaIngreso()).isNotNull();
     }

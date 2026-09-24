@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -38,6 +39,7 @@ public class GestionarSemilleroUseCaseImpl implements GestionarSemilleroUseCase 
     private final FiltrosRepositoryPort filtrosRepositoryPort;
 
     private static final String SEMILLERO = "Semillero";
+    private static final String ROL_INTEGRANTE_POR_DEFECTO = "ESTUDIANTE_INVESTIGADOR";
 
     @Value("${app.admin.correo:admin@udea.edu.co}")
     private String correoAdministrador;
@@ -51,14 +53,12 @@ public class GestionarSemilleroUseCaseImpl implements GestionarSemilleroUseCase 
                 List.of(Semillero.EstadoSemillero.BORRADOR)
         );
 
-        boolean tieneBorradorSinNombre = existentes.stream()
-                .anyMatch(s -> s.getNombre() == null || s.getNombre().isBlank());
+        Optional<Semillero> borradorSinNombre = existentes.stream()
+                .filter(s -> s.getNombre() == null || s.getNombre().isBlank())
+                .findFirst();
 
-        if (tieneBorradorSinNombre) {
-            return existentes.stream()
-                    .filter(s -> s.getNombre() == null || s.getNombre().isBlank())
-                    .findFirst()
-                    .get();
+        if (borradorSinNombre.isPresent()) {
+            return borradorSinNombre.get();
         }
 
         String codigo = generarCodigoUnico();
@@ -208,7 +208,8 @@ public class GestionarSemilleroUseCaseImpl implements GestionarSemilleroUseCase 
                 inscripcion.getApellidos(),
                 inscripcion.getCedula(),
                 inscripcion.getCorreo(),
-                "ESTUDIANTE"
+                inscripcion.getSexo(),
+                ROL_INTEGRANTE_POR_DEFECTO
         );
 
         return guardada;

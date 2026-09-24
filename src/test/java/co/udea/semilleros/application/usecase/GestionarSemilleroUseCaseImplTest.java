@@ -278,7 +278,7 @@ class GestionarSemilleroUseCaseImplTest {
         verify(inscripcionRepositoryPort).guardar(any());
         verify(semilleroIntegranteRepositoryPort).registrarIntegrante(
                 eq(idSemillero), eq("Ana"), eq("Pérez"), eq("12345678"),
-                eq("ana@example.com"), eq("ESTUDIANTE"));
+                eq("ana@example.com"), eq("FEMENINO"), eq("ESTUDIANTE_INVESTIGADOR"));
     }
 
     @Test
@@ -319,6 +319,7 @@ class GestionarSemilleroUseCaseImplTest {
                 .cedula("12345678")
                 .correo("ana@example.com")
                 .telefono("3001234567")
+                .sexo("FEMENINO")
                 .programa("Ingeniería de Sistemas")
                 .semestre("6")
                 .motivacion("Quiero participar en actividades de investigación aplicada.")

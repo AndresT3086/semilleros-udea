@@ -18,13 +18,15 @@ public class SemilleroIntegranteRepositoryAdapter implements SemilleroIntegrante
 
     @Override
     public void registrarIntegrante(Long idSemillero, String nombres, String apellidos,
-                                    String cedula, String correo, String tipoVinculacion) {
+                                    String cedula, String correo, String sexo,
+                                    String tipoVinculacion) {
         SemilleroIntegranteEntity integrante = SemilleroIntegranteEntity.builder()
                 .semillero(semilleroJpaRepository.getReferenceById(idSemillero))
                 .nombres(nombres)
                 .apellidos(apellidos)
                 .cedula(cedula)
                 .correo(correo)
+                .sexo(sexo)
                 .tipoVinculacion(tipoVinculacion)
                 .activo(true)
                 .fechaIngreso(LocalDate.now())

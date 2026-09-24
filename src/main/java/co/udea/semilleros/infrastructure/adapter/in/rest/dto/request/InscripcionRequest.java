@@ -33,6 +33,9 @@ public class InscripcionRequest {
     @Pattern(regexp = "^[0-9]{10}$", message = "El teléfono debe tener exactamente 10 dígitos numéricos")
     private String telefono;
 
+    @Pattern(regexp = "^(FEMENINO|MASCULINO|OTRO)?$", message = "El sexo debe ser FEMENINO, MASCULINO u OTRO")
+    private String sexo;
+
     @Size(max = 200, message = "El programa no puede superar los 200 caracteres")
     private String programa;
 
@@ -45,4 +48,9 @@ public class InscripcionRequest {
     @NotNull(message = "Debe aceptar los términos y condiciones")
     @AssertTrue(message = "Debe aceptar los términos y condiciones para continuar")
     private Boolean aceptaTerminos;
+
+    /** Opcional: vacío equivale a "prefiere no informarlo". */
+    public String getSexo() {
+        return sexo == null || sexo.isBlank() ? null : sexo;
+    }
 }

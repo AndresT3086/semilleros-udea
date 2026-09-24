@@ -146,7 +146,8 @@ mvn spring-boot:run -Pdev
 | `GET` | `/api/v1/filtros/campus` | Filtros de campus |
 | `GET` | `/api/v1/filtros/areas-ocde` | Filtros de áreas OCDE |
 | `GET` | `/api/v1/auth/captcha-math` | Obtener desafío anti-bot |
-| `POST` | `/api/v1/auth/login` | Autenticar coordinador |
+| `POST` | `/api/v1/auth/login` | Autenticar coordinador o administrador |
+| `GET` | `/api/v1/reportes/publico/dashboard` | Estadísticas agregadas y anónimas del programa |
 
 ### Protegidos (requieren `Authorization: Bearer <token>`)
 
@@ -166,6 +167,32 @@ mvn spring-boot:run -Pdev
 | `GET`/`PATCH` | `/api/v1/coordinador/semilleros/{id}/pestana/actividades` | Consultar / guardar pestaña Actividades |
 | `GET`/`PATCH` | `/api/v1/coordinador/semilleros/{id}/pestana/dofa` | Consultar / guardar pestaña DOFA |
 | `GET`/`PATCH` | `/api/v1/coordinador/semilleros/{id}/pestana/ods` | Consultar / guardar pestaña ODS |
+| `GET`/`POST` | `/api/v1/coordinador/semilleros/{id}/sesiones` | Listar (`periodo`) / registrar actividad con su lista de asistencia |
+| `GET`/`PUT`/`DELETE` | `/api/v1/coordinador/semilleros/sesiones/{idSesion}` | Detalle / corregir / eliminar actividad |
+| `GET` | `/api/v1/coordinador/semilleros/{id}/asistencia/integrantes` | % de asistencia por integrante (`periodo`) |
+| `GET` | `/api/v1/coordinador/reportes/dashboard` | Reportes calculados solo con los semilleros del coordinador |
+| `GET` | `/api/v1/coordinador/reportes/rendimiento` | Rendimiento de los semilleros del coordinador |
+| `GET` | `/api/v1/coordinador/reportes/semilleros` | Semilleros activos del coordinador para filtrar |
+
+### Administrador (requieren token con rol `ADMIN`)
+
+Todos aceptan los filtros `periodo` (`2025`, `2025-1`, `2025-2`), `tipoUnidad`
+(`FACULTAD`, `ESCUELA`, `INSTITUTO`, `CORPORACION`, `SECCIONAL`), `idUnidad`, `idCampus` e `idSemillero`.
+
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| `GET` | `/api/v1/admin/reportes/kpis` | KPIs globales con tendencia frente al período anterior |
+| `GET` | `/api/v1/admin/reportes/dashboard` | Tablero completo: KPIs, unidades, campus, sexo, roles, top 5, evolución y actividades |
+| `GET` | `/api/v1/admin/reportes/rendimiento` | Tabla por semillero (`pagina`, `tamano`, `orden`, `direccion`) |
+| `GET` | `/api/v1/admin/reportes/semilleros` | Semilleros activos para el filtro |
+| `GET` | `/api/v1/admin/reportes/exportar?formato=xlsx\|pdf\|csv` | Descarga `reporte_sigsi_AAAA-MM-DD_HHMM.<ext>` |
+| `GET` | `/api/v1/admin/reportes/eventos` | Server-Sent Events: emite `datos-actualizados` cuando cambian los datos |
+
+Asistencia: % = presentes / (presentes + ausentes) × 100. Las ausencias `EXCUSADO` se descuentan del total
+esperado y los totales por unidad, campus o programa suman asistencias (no promedian porcentajes).
+
+Roles: la columna `coordinador.rol` admite `ADMIN` o `COORDINADOR` (migración `V8`) y viaja en el
+claim `rol` del JWT. Para crear otro administrador: `UPDATE coordinador SET rol = 'ADMIN' WHERE correo = '...'`.
 
 ---
 

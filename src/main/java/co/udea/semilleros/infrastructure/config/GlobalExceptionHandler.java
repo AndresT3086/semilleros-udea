@@ -3,7 +3,9 @@ package co.udea.semilleros.infrastructure.config;
 import co.udea.semilleros.domain.exception.AccesoNoAutorizadoException;
 import co.udea.semilleros.domain.exception.CamposObligatoriosPendientesException;
 import co.udea.semilleros.domain.exception.CredencialesInvalidasException;
+import co.udea.semilleros.domain.exception.DatosAsistenciaInvalidosException;
 import co.udea.semilleros.domain.exception.DominioCorreoNoPermitidoException;
+import co.udea.semilleros.domain.exception.FiltroReporteInvalidoException;
 import co.udea.semilleros.domain.exception.InscripcionDuplicadaException;
 import co.udea.semilleros.domain.exception.RecursoNoEncontradoException;
 import co.udea.semilleros.domain.exception.SemilleroYaExisteException;
@@ -13,6 +15,7 @@ import co.udea.semilleros.infrastructure.adapter.in.rest.dto.response.ApiRespons
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -67,6 +70,15 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error(ex.getErrorCode(), ex.getMessage()));
     }
 
+    // Sin este manejador, @PreAuthorize terminaría en el handler genérico (500) en lugar de 403
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleAccesoDenegado(AccessDeniedException ex) {
+        log.warn("Acceso denegado por rol: {}", ex.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(ApiResponse.error("ACCESO_NO_AUTORIZADO", "No tiene permisos para realizar esta operación."));
+    }
+
     @ExceptionHandler(InscripcionDuplicadaException.class)
     public ResponseEntity<ApiResponse<Void>> handleInscripcionDuplicada(InscripcionDuplicadaException ex) {
         log.warn("Inscripción duplicada: {}", ex.getMessage());
@@ -86,6 +98,22 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(CamposObligatoriosPendientesException.class)
     public ResponseEntity<ApiResponse<Void>> handleCamposPendientes(CamposObligatoriosPendientesException ex) {
         log.warn("Campos obligatorios pendientes: {}", ex.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error(ex.getErrorCode(), ex.getMessage()));
+    }
+
+    @ExceptionHandler(DatosAsistenciaInvalidosException.class)
+    public ResponseEntity<ApiResponse<Void>> handleDatosAsistenciaInvalidos(DatosAsistenciaInvalidosException ex) {
+        log.warn("Datos de asistencia inválidos: {}", ex.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error(ex.getErrorCode(), ex.getMessage()));
+    }
+
+    @ExceptionHandler(FiltroReporteInvalidoException.class)
+    public ResponseEntity<ApiResponse<Void>> handleFiltroReporteInvalido(FiltroReporteInvalidoException ex) {
+        log.warn("Filtro de reporte inválido: {}", ex.getMessage());
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(ApiResponse.error(ex.getErrorCode(), ex.getMessage()));
