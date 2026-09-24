@@ -105,7 +105,6 @@ class ReporteFiltroTest {
         ReporteFiltro coordinador = base.paraCoordinador(9L);
         assertThat(coordinador.alcance()).isEqualTo(AlcanceReporte.COORDINADOR);
         assertThat(coordinador.idCoordinador()).isEqualTo(9L);
-        assertThat(base.paraPublico().alcance()).isEqualTo(AlcanceReporte.PUBLICO);
         assertThat(base.sinSemillero().idSemillero()).isNull();
         assertThat(base.sinPeriodo().periodo()).isNull();
         assertThat(base.sinPeriodo().tipoUnidad()).isEqualTo(TipoUnidad.FACULTAD);

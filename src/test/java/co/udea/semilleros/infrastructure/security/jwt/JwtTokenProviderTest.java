@@ -26,22 +26,22 @@ class JwtTokenProviderTest {
         jwtTokenProvider.init();
     }
 
-    // ─── generarToken / extraerCorreo / extraerIdCoordinador ──────────────────
+    // ─── generarToken / extraerCorreo / extraerIdUsuario ──────────────────
 
     @Test
-    @DisplayName("generarToken: debe permitir recuperar correo e id de coordinador desde el token generado")
+    @DisplayName("generarToken: debe permitir recuperar correo e id de usuarior desde el token generado")
     void generarToken_luegoExtraerDatos_retornaValoresOriginales() {
         // ARRANGE
-        Long idCoordinador = 42L;
+        Long idUsuario = 42L;
         String correo = "coordinador@udea.edu.co";
 
         // ACT
-        String token = jwtTokenProvider.generarToken(idCoordinador, correo, "COORDINADOR");
+        String token = jwtTokenProvider.generarToken(idUsuario, correo, "COORDINADOR");
 
         // ASSERT
         assertThat(token).isNotBlank();
         assertThat(jwtTokenProvider.extraerCorreo(token)).isEqualTo(correo);
-        assertThat(jwtTokenProvider.extraerIdCoordinador(token)).isEqualTo(idCoordinador);
+        assertThat(jwtTokenProvider.extraerIdUsuario(token)).isEqualTo(idUsuario);
         assertThat(jwtTokenProvider.extraerRol(token)).isEqualTo("COORDINADOR");
     }
 
@@ -119,5 +119,21 @@ class JwtTokenProviderTest {
         // ACT & ASSERT
         assertThatThrownBy(() -> jwtTokenProvider.extraerCorreo("token.invalido.corrupto"))
                 .isInstanceOf(TokenInvalidoException.class);
+    }
+
+    @Test
+    @DisplayName("extraerIdUsuario: acepta tokens emitidos con el claim anterior idCoordinador")
+    void extraerIdUsuario_tokenConClaimAnterior() {
+        java.security.Key clave = io.jsonwebtoken.security.Keys.hmacShaKeyFor(
+                SECRETO.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        String tokenAnterior = io.jsonwebtoken.Jwts.builder()
+                .subject("coordinador@udea.edu.co")
+                .claim("idCoordinador", 7L)
+                .claim("rol", "COORDINADOR")
+                .expiration(new java.util.Date(System.currentTimeMillis() + 60_000))
+                .signWith(clave)
+                .compact();
+
+        assertThat(jwtTokenProvider.extraerIdUsuario(tokenAnterior)).isEqualTo(7L);
     }
 }

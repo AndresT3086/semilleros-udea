@@ -1,7 +1,7 @@
 package co.udea.semilleros.infrastructure.adapter.in.rest.controller;
 
 import co.udea.semilleros.domain.exception.CredencialesInvalidasException;
-import co.udea.semilleros.domain.port.in.AutenticarCoordinadorUseCase;
+import co.udea.semilleros.domain.port.in.AutenticarUsuarioUseCase;
 import co.udea.semilleros.infrastructure.config.GlobalExceptionHandler;
 import co.udea.semilleros.infrastructure.security.jwt.JwtTokenProvider;
 import org.junit.jupiter.api.DisplayName;
@@ -34,7 +34,7 @@ class AuthControllerTest {
     private MockMvc mockMvc;
 
     @MockBean
-    private AutenticarCoordinadorUseCase autenticarCoordinadorUseCase;
+    private AutenticarUsuarioUseCase autenticarUsuarioUseCase;
 
     @MockBean
     private JwtTokenProvider jwtTokenProvider;
@@ -58,9 +58,9 @@ class AuthControllerTest {
     void login_conCredencialesValidas_retorna200() throws Exception {
         // ARRANGE
         String token = "eyJhbGciOiJIUzI1NiJ9.test.token";
-        when(autenticarCoordinadorUseCase.autenticar(anyString(), anyString(), anyInt(), anyInt(), anyInt()))
+        when(autenticarUsuarioUseCase.autenticar(anyString(), anyString(), anyInt(), anyInt(), anyInt()))
                 .thenReturn(token);
-        when(jwtTokenProvider.extraerIdCoordinador(token)).thenReturn(5L);
+        when(jwtTokenProvider.extraerIdUsuario(token)).thenReturn(5L);
 
         String body = """
                 {"correo":"coordinador@udea.edu.co","password":"clave-de-prueba-no-real","respuestaMath":7,"operando1":3,"operando2":4}
@@ -72,14 +72,14 @@ class AuthControllerTest {
                         .content(body))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.datos.token").value(token))
-                .andExpect(jsonPath("$.datos.idCoordinador").value(5));
+                .andExpect(jsonPath("$.datos.idUsuario").value(5));
     }
 
     @Test
     @DisplayName("POST /login: debe retornar 401 cuando las credenciales son inválidas")
     void login_conCredencialesInvalidas_retorna401() throws Exception {
         // ARRANGE
-        when(autenticarCoordinadorUseCase.autenticar(anyString(), anyString(), anyInt(), anyInt(), anyInt()))
+        when(autenticarUsuarioUseCase.autenticar(anyString(), anyString(), anyInt(), anyInt(), anyInt()))
                 .thenThrow(new CredencialesInvalidasException());
 
         String body = """

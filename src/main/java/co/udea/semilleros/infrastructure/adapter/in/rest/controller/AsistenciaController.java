@@ -6,7 +6,7 @@ import co.udea.semilleros.domain.model.asistencia.SesionDetalle;
 import co.udea.semilleros.domain.port.in.GestionarAsistenciaUseCase;
 import co.udea.semilleros.infrastructure.adapter.in.rest.dto.request.SesionRequest;
 import co.udea.semilleros.infrastructure.adapter.in.rest.dto.response.ApiResponse;
-import co.udea.semilleros.infrastructure.security.filter.CoordinadorPrincipal;
+import co.udea.semilleros.infrastructure.security.filter.UsuarioPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -46,7 +46,7 @@ public class AsistenciaController {
     @Operation(summary = "Listar actividades del semillero", description = "Sesiones registradas con el conteo "
             + "de presentes, ausentes y excusados y el % de asistencia de cada una.")
     public ResponseEntity<ApiResponse<List<Sesion>>> listarSesiones(
-            @AuthenticationPrincipal CoordinadorPrincipal principal,
+            @AuthenticationPrincipal UsuarioPrincipal principal,
             @PathVariable Long idSemillero,
             @Parameter(description = PERIODO) @RequestParam(required = false) String periodo
     ) {
@@ -58,7 +58,7 @@ public class AsistenciaController {
     @Operation(summary = "Registrar actividad y asistencia", description = "Crea la sesión con la lista de "
             + "asistencia. Los integrantes activos que no se envíen quedan como AUSENTE.")
     public ResponseEntity<ApiResponse<SesionDetalle>> registrarSesion(
-            @AuthenticationPrincipal CoordinadorPrincipal principal,
+            @AuthenticationPrincipal UsuarioPrincipal principal,
             @PathVariable Long idSemillero,
             @Valid @RequestBody SesionRequest request
     ) {
@@ -69,7 +69,7 @@ public class AsistenciaController {
     @GetMapping("/sesiones/{idSesion}")
     @Operation(summary = "Detalle de una actividad con su lista de asistencia")
     public ResponseEntity<ApiResponse<SesionDetalle>> obtenerSesion(
-            @AuthenticationPrincipal CoordinadorPrincipal principal,
+            @AuthenticationPrincipal UsuarioPrincipal principal,
             @PathVariable Long idSesion
     ) {
         return ResponseEntity.ok(ApiResponse.exito(gestionarAsistenciaUseCase.obtenerSesion(principal.getId(), idSesion)));
@@ -78,7 +78,7 @@ public class AsistenciaController {
     @PutMapping("/sesiones/{idSesion}")
     @Operation(summary = "Corregir actividad y asistencia", description = "Reemplaza los datos y la lista de asistencia.")
     public ResponseEntity<ApiResponse<SesionDetalle>> actualizarSesion(
-            @AuthenticationPrincipal CoordinadorPrincipal principal,
+            @AuthenticationPrincipal UsuarioPrincipal principal,
             @PathVariable Long idSesion,
             @Valid @RequestBody SesionRequest request
     ) {
@@ -89,7 +89,7 @@ public class AsistenciaController {
     @DeleteMapping("/sesiones/{idSesion}")
     @Operation(summary = "Eliminar actividad", description = "Elimina la sesión y su lista de asistencia.")
     public ResponseEntity<ApiResponse<Void>> eliminarSesion(
-            @AuthenticationPrincipal CoordinadorPrincipal principal,
+            @AuthenticationPrincipal UsuarioPrincipal principal,
             @PathVariable Long idSesion
     ) {
         gestionarAsistenciaUseCase.eliminarSesion(principal.getId(), idSesion);
@@ -100,7 +100,7 @@ public class AsistenciaController {
     @Operation(summary = "Asistencia por integrante", description = "Integrantes activos (y retirados con registros "
             + "en el período) con su conteo y % de asistencia; las ausencias excusadas se descuentan.")
     public ResponseEntity<ApiResponse<List<IntegranteAsistencia>>> asistenciaPorIntegrante(
-            @AuthenticationPrincipal CoordinadorPrincipal principal,
+            @AuthenticationPrincipal UsuarioPrincipal principal,
             @PathVariable Long idSemillero,
             @Parameter(description = PERIODO) @RequestParam(required = false) String periodo
     ) {

@@ -40,13 +40,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (StringUtils.hasText(token) && jwtTokenProvider.esTokenValido(token)) {
             String correo = jwtTokenProvider.extraerCorreo(token);
-            Long idCoordinador = jwtTokenProvider.extraerIdCoordinador(token);
+            Long idUsuario = jwtTokenProvider.extraerIdUsuario(token);
             String rol = jwtTokenProvider.extraerRol(token);
             if (!StringUtils.hasText(rol)) {
                 rol = "COORDINADOR";
             }
 
-            CoordinadorPrincipal principal = new CoordinadorPrincipal(idCoordinador, correo, rol);
+            UsuarioPrincipal principal = new UsuarioPrincipal(idUsuario, correo, rol);
 
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(

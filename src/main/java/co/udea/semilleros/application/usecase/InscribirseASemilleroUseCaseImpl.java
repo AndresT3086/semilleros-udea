@@ -5,7 +5,7 @@ import co.udea.semilleros.domain.exception.RecursoNoEncontradoException;
 import co.udea.semilleros.domain.model.Inscripcion;
 import co.udea.semilleros.domain.model.Semillero;
 import co.udea.semilleros.domain.port.in.InscribirseASemilleroUseCase;
-import co.udea.semilleros.domain.port.out.CoordinadorRepositoryPort;
+import co.udea.semilleros.domain.port.out.UsuarioRepositoryPort;
 import co.udea.semilleros.domain.port.out.InscripcionRepositoryPort;
 import co.udea.semilleros.domain.port.out.NotificacionEmailPort;
 import co.udea.semilleros.domain.port.out.SemilleroRepositoryPort;
@@ -21,7 +21,7 @@ public class InscribirseASemilleroUseCaseImpl implements InscribirseASemilleroUs
 
     private final InscripcionRepositoryPort inscripcionRepositoryPort;
     private final SemilleroRepositoryPort semilleroRepositoryPort;
-    private final CoordinadorRepositoryPort coordinadorRepositoryPort;
+    private final UsuarioRepositoryPort usuarioRepositoryPort;
     private final NotificacionEmailPort notificacionEmailPort;
 
     @Override
@@ -43,7 +43,7 @@ public class InscribirseASemilleroUseCaseImpl implements InscribirseASemilleroUs
 
         Inscripcion guardada = inscripcionRepositoryPort.guardar(nueva);
 
-        coordinadorRepositoryPort.buscarPorId(semillero.getIdCoordinador())
+        usuarioRepositoryPort.buscarPorId(semillero.getIdCoordinador())
                 .ifPresent(coordinador ->
                         notificacionEmailPort.notificarNuevaInscripcion(guardada, coordinador.getCorreo()));
 

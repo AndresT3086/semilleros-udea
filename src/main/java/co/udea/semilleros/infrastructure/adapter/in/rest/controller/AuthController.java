@@ -1,6 +1,6 @@
 package co.udea.semilleros.infrastructure.adapter.in.rest.controller;
 
-import co.udea.semilleros.domain.port.in.AutenticarCoordinadorUseCase;
+import co.udea.semilleros.domain.port.in.AutenticarUsuarioUseCase;
 import co.udea.semilleros.infrastructure.adapter.in.rest.dto.request.LoginRequest;
 import co.udea.semilleros.infrastructure.adapter.in.rest.dto.response.ApiResponse;
 import co.udea.semilleros.infrastructure.adapter.in.rest.dto.response.CaptchaMathResponse;
@@ -25,10 +25,10 @@ import java.util.concurrent.ThreadLocalRandom;
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
-@Tag(name = "Autenticación", description = "Endpoints de autenticación para coordinadores de semilleros")
+@Tag(name = "Autenticación", description = "Inicio de sesión de usuarios del sistema (administradores y coordinadores)")
 public class AuthController {
 
-    private final AutenticarCoordinadorUseCase autenticarCoordinadorUseCase;
+    private final AutenticarUsuarioUseCase autenticarUsuarioUseCase;
     private final JwtTokenProvider jwtTokenProvider;
 
     @GetMapping("/captcha-math")
@@ -53,8 +53,8 @@ public class AuthController {
 
     @PostMapping("/login")
     @Operation(
-        summary = "Iniciar sesión como coordinador",
-        description = "Autentica a un coordinador con correo @udea.edu.co, contraseña y validación matemática anti-bot. "
+        summary = "Iniciar sesión",
+        description = "Autentica a un usuario (ADMIN o COORDINADOR) con correo @udea.edu.co, contraseña y validación matemática anti-bot. "
                     + "Retorna un token JWT válido para usar en los endpoints protegidos."
     )
     @ApiResponses({
@@ -67,7 +67,7 @@ public class AuthController {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "422", description = "Validación matemática incorrecta")
     })
     public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest request) {
-        String token = autenticarCoordinadorUseCase.autenticar(
+        String token = autenticarUsuarioUseCase.autenticar(
                 request.getCorreo(),
                 request.getPassword(),
                 request.getRespuestaMath(),
@@ -75,13 +75,13 @@ public class AuthController {
                 request.getOperando2()
         );
 
-        Long idCoordinador = jwtTokenProvider.extraerIdCoordinador(token);
+        Long idUsuario = jwtTokenProvider.extraerIdUsuario(token);
 
         LoginResponse response = LoginResponse.builder()
                 .token(token)
                 .tipo("Bearer")
                 .correo(request.getCorreo())
-                .idCoordinador(idCoordinador)
+                .idUsuario(idUsuario)
                 .build();
 
         return ResponseEntity.ok(ApiResponse.exito("Autenticación exitosa.", response));

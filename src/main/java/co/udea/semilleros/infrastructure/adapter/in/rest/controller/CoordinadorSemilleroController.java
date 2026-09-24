@@ -6,7 +6,7 @@ import co.udea.semilleros.domain.port.out.ActividadesRepositoryPort;
 import co.udea.semilleros.infrastructure.adapter.in.rest.dto.request.*;
 import co.udea.semilleros.infrastructure.adapter.in.rest.dto.response.*;
 import co.udea.semilleros.infrastructure.adapter.in.rest.mapper.SemilleroRestMapper;
-import co.udea.semilleros.infrastructure.security.filter.CoordinadorPrincipal;
+import co.udea.semilleros.infrastructure.security.filter.UsuarioPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -47,7 +47,7 @@ public class CoordinadorSemilleroController {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "No autenticado")
     })
     public ResponseEntity<ApiResponse<SemilleroDetalleResponse>> iniciarCaracterizacion(
-            @AuthenticationPrincipal CoordinadorPrincipal principal
+            @AuthenticationPrincipal UsuarioPrincipal principal
     ) {
         Semillero semillero = gestionarSemilleroUseCase.crearSemilleroBorrador(principal.getId());
         return ResponseEntity
@@ -62,7 +62,7 @@ public class CoordinadorSemilleroController {
         description = "Retorna el semillero asociado al coordinador autenticado con el progreso de caracterización."
     )
     public ResponseEntity<ApiResponse<List<SemilleroDetalleResponse>>> obtenerMisSemilleros(
-            @AuthenticationPrincipal CoordinadorPrincipal principal
+            @AuthenticationPrincipal UsuarioPrincipal principal
     ) {
         List<SemilleroDetalleResponse> response = gestionarSemilleroUseCase
                 .obtenerSemillerosDelCoordinador(principal.getId())
@@ -80,7 +80,7 @@ public class CoordinadorSemilleroController {
     )
     public ResponseEntity<ApiResponse<SemilleroDetalleResponse>> obtenerSemillero(
             @PathVariable Long idSemillero,
-            @AuthenticationPrincipal CoordinadorPrincipal principal
+            @AuthenticationPrincipal UsuarioPrincipal principal
     ) {
         Semillero semillero = gestionarSemilleroUseCase
                 .obtenerSemilleroDelCoordinadorPorId(idSemillero, principal.getId());
@@ -95,7 +95,7 @@ public class CoordinadorSemilleroController {
     )
     public ResponseEntity<ApiResponse<List<InscripcionResponse>>> listarInscripcionesPendientes(
             @PathVariable Long idSemillero,
-            @AuthenticationPrincipal CoordinadorPrincipal principal
+            @AuthenticationPrincipal UsuarioPrincipal principal
     ) {
         List<InscripcionResponse> response = gestionarSemilleroUseCase
                 .listarInscripcionesPendientes(idSemillero, principal.getId())
@@ -113,7 +113,7 @@ public class CoordinadorSemilleroController {
     )
     public ResponseEntity<ApiResponse<InscripcionResponse>> aprobarInscripcion(
             @PathVariable Long idInscripcion,
-            @AuthenticationPrincipal CoordinadorPrincipal principal
+            @AuthenticationPrincipal UsuarioPrincipal principal
     ) {
         return ResponseEntity.ok(ApiResponse.exito(
                 "Solicitud aprobada exitosamente.",
@@ -128,7 +128,7 @@ public class CoordinadorSemilleroController {
     )
     public ResponseEntity<ApiResponse<InscripcionResponse>> rechazarInscripcion(
             @PathVariable Long idInscripcion,
-            @AuthenticationPrincipal CoordinadorPrincipal principal
+            @AuthenticationPrincipal UsuarioPrincipal principal
     ) {
         return ResponseEntity.ok(ApiResponse.exito(
                 "Solicitud rechazada exitosamente.",
@@ -155,7 +155,7 @@ public class CoordinadorSemilleroController {
     public ResponseEntity<ApiResponse<SemilleroDetalleResponse>> guardarPestanaGeneral(
             @Parameter(description = "ID del semillero", required = true) @PathVariable Long idSemillero,
             @Valid @RequestBody GuardarPestanaGeneralRequest request,
-            @AuthenticationPrincipal CoordinadorPrincipal principal
+            @AuthenticationPrincipal UsuarioPrincipal principal
     ) {
         Semillero datos = semilleroRestMapper.toPestanaGeneralDomain(request);
         Semillero guardado = gestionarSemilleroUseCase.guardarPestanaGeneral(idSemillero, principal.getId(), datos);
@@ -177,7 +177,7 @@ public class CoordinadorSemilleroController {
     })
     public ResponseEntity<ApiResponse<SemilleroDetalleResponse>> finalizarCaracterizacion(
             @Parameter(description = "ID del semillero", required = true) @PathVariable Long idSemillero,
-            @AuthenticationPrincipal CoordinadorPrincipal principal
+            @AuthenticationPrincipal UsuarioPrincipal principal
     ) {
         Semillero finalizado = gestionarSemilleroUseCase.finalizarCaracterizacion(idSemillero, principal.getId());
         return ResponseEntity.ok(ApiResponse.exito(
@@ -192,7 +192,7 @@ public class CoordinadorSemilleroController {
     public ResponseEntity<ApiResponse<SemilleroDetalleResponse>> guardarProduccion(
             @PathVariable Long idSemillero,
             @Valid @RequestBody GuardarPestanaProduccionRequest request,
-            @AuthenticationPrincipal CoordinadorPrincipal principal) {
+            @AuthenticationPrincipal UsuarioPrincipal principal) {
 
         Semillero guardado = gestionarSemilleroUseCase.guardarPestanaProduccion(
                 idSemillero, principal.getId(),
@@ -213,7 +213,7 @@ public class CoordinadorSemilleroController {
     public ResponseEntity<ApiResponse<SemilleroDetalleResponse>> guardarOrganizacion(
             @PathVariable Long idSemillero,
             @Valid @RequestBody GuardarPestanaOrganizacionRequest request,
-            @AuthenticationPrincipal CoordinadorPrincipal principal) {
+            @AuthenticationPrincipal UsuarioPrincipal principal) {
 
         Semillero guardado = gestionarSemilleroUseCase.guardarPestanaOrganizacion(
                 idSemillero, principal.getId(),
@@ -228,7 +228,7 @@ public class CoordinadorSemilleroController {
     public ResponseEntity<ApiResponse<SemilleroDetalleResponse>> guardarRelacionamiento(
             @PathVariable Long idSemillero,
             @RequestBody GuardarPestanaRelacionamientoRequest request,
-            @AuthenticationPrincipal CoordinadorPrincipal principal) {
+            @AuthenticationPrincipal UsuarioPrincipal principal) {
 
         Semillero guardado = gestionarSemilleroUseCase.guardarPestanaRelacionamiento(
                 idSemillero, principal.getId(),
@@ -250,7 +250,7 @@ public class CoordinadorSemilleroController {
     public ResponseEntity<ApiResponse<SemilleroDetalleResponse>> guardarActividades(
             @PathVariable Long idSemillero,
             @Valid @RequestBody GuardarPestanaActividadesRequest request,
-            @AuthenticationPrincipal CoordinadorPrincipal principal) {
+            @AuthenticationPrincipal UsuarioPrincipal principal) {
 
         List<ActividadesRepositoryPort.ActividadDto> dtos = request.getActividades().stream()
                 .map(a -> new ActividadesRepositoryPort.ActividadDto(a.getIdActividad(), a.getRealiza()))
@@ -269,7 +269,7 @@ public class CoordinadorSemilleroController {
     public ResponseEntity<ApiResponse<SemilleroDetalleResponse>> guardarDofa(
             @PathVariable Long idSemillero,
             @Valid @RequestBody GuardarPestanaDofaRequest request,
-            @AuthenticationPrincipal CoordinadorPrincipal principal) {
+            @AuthenticationPrincipal UsuarioPrincipal principal) {
 
         Semillero guardado = gestionarSemilleroUseCase.guardarPestanaDofa(
                 idSemillero, principal.getId(),
@@ -285,7 +285,7 @@ public class CoordinadorSemilleroController {
     public ResponseEntity<ApiResponse<SemilleroDetalleResponse>> guardarOds(
             @PathVariable Long idSemillero,
             @Valid @RequestBody GuardarPestanaOdsRequest request,
-            @AuthenticationPrincipal CoordinadorPrincipal principal) {
+            @AuthenticationPrincipal UsuarioPrincipal principal) {
 
         Semillero guardado = gestionarSemilleroUseCase.guardarPestanaOds(
                 idSemillero, principal.getId(),
@@ -304,7 +304,7 @@ public class CoordinadorSemilleroController {
     @Operation(summary = "Obtener datos de pestaña General")
     public ResponseEntity<ApiResponse<PestanaGeneralResponse>> obtenerGeneral(
             @PathVariable Long idSemillero,
-            @AuthenticationPrincipal CoordinadorPrincipal principal) {
+            @AuthenticationPrincipal UsuarioPrincipal principal) {
 
         return ResponseEntity.ok(ApiResponse.exito(
                 gestionarSemilleroUseCase.obtenerPestanaGeneral(
@@ -315,7 +315,7 @@ public class CoordinadorSemilleroController {
     @Operation(summary = "Obtener datos de pestaña Producción")
     public ResponseEntity<ApiResponse<PestanaProduccionResponse>> obtenerProduccion(
             @PathVariable Long idSemillero,
-            @AuthenticationPrincipal CoordinadorPrincipal principal) {
+            @AuthenticationPrincipal UsuarioPrincipal principal) {
 
         return ResponseEntity.ok(ApiResponse.exito(
                 gestionarSemilleroUseCase.obtenerPestanaProduccion(
@@ -326,7 +326,7 @@ public class CoordinadorSemilleroController {
     @Operation(summary = "Obtener datos de pestaña Organización")
     public ResponseEntity<ApiResponse<PestanaOrganizacionResponse>> obtenerOrganizacion(
             @PathVariable Long idSemillero,
-            @AuthenticationPrincipal CoordinadorPrincipal principal) {
+            @AuthenticationPrincipal UsuarioPrincipal principal) {
 
         return ResponseEntity.ok(ApiResponse.exito(
                 gestionarSemilleroUseCase.obtenerPestanaOrganizacion(
@@ -337,7 +337,7 @@ public class CoordinadorSemilleroController {
     @Operation(summary = "Obtener datos de pestaña Relacionamiento")
     public ResponseEntity<ApiResponse<PestanaRelacionamientoResponse>> obtenerRelacionamiento(
             @PathVariable Long idSemillero,
-            @AuthenticationPrincipal CoordinadorPrincipal principal) {
+            @AuthenticationPrincipal UsuarioPrincipal principal) {
 
         return ResponseEntity.ok(ApiResponse.exito(
                 gestionarSemilleroUseCase.obtenerPestanaRelacionamiento(
@@ -348,7 +348,7 @@ public class CoordinadorSemilleroController {
     @Operation(summary = "Obtener datos de pestaña Actividades")
     public ResponseEntity<ApiResponse<PestanaActividadesResponse>> obtenerActividades(
             @PathVariable Long idSemillero,
-            @AuthenticationPrincipal CoordinadorPrincipal principal) {
+            @AuthenticationPrincipal UsuarioPrincipal principal) {
 
         return ResponseEntity.ok(ApiResponse.exito(
                 gestionarSemilleroUseCase.obtenerPestanaActividades(
@@ -359,7 +359,7 @@ public class CoordinadorSemilleroController {
     @Operation(summary = "Obtener datos de pestaña DOFA")
     public ResponseEntity<ApiResponse<PestanaDofaResponse>> obtenerDofa(
             @PathVariable Long idSemillero,
-            @AuthenticationPrincipal CoordinadorPrincipal principal) {
+            @AuthenticationPrincipal UsuarioPrincipal principal) {
 
         return ResponseEntity.ok(ApiResponse.exito(
                 gestionarSemilleroUseCase.obtenerPestanaDofa(
@@ -370,7 +370,7 @@ public class CoordinadorSemilleroController {
     @Operation(summary = "Obtener datos de pestaña ODS")
     public ResponseEntity<ApiResponse<PestanaOdsResponse>> obtenerOds(
             @PathVariable Long idSemillero,
-            @AuthenticationPrincipal CoordinadorPrincipal principal) {
+            @AuthenticationPrincipal UsuarioPrincipal principal) {
 
         return ResponseEntity.ok(ApiResponse.exito(
                 gestionarSemilleroUseCase.obtenerPestanaOds(

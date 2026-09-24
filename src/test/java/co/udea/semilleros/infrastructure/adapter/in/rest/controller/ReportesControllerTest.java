@@ -17,7 +17,7 @@ import co.udea.semilleros.domain.model.reporte.TipoUnidad;
 import co.udea.semilleros.domain.port.in.ConsultarReportesUseCase;
 import co.udea.semilleros.infrastructure.adapter.in.rest.sse.ReportesEventosPublisher;
 import co.udea.semilleros.infrastructure.config.GlobalExceptionHandler;
-import co.udea.semilleros.infrastructure.security.filter.CoordinadorPrincipal;
+import co.udea.semilleros.infrastructure.security.filter.UsuarioPrincipal;
 import co.udea.semilleros.infrastructure.security.jwt.JwtTokenProvider;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
@@ -84,7 +84,7 @@ class ReportesControllerTest {
 
     private static void autenticarComo(String rol, Long id) {
         SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(
-                new CoordinadorPrincipal(id, "usuario@udea.edu.co", rol), null,
+                new UsuarioPrincipal(id, "usuario@udea.edu.co", rol), null,
                 List.of(new SimpleGrantedAuthority("ROLE_" + rol))));
     }
 
@@ -262,6 +262,13 @@ class ReportesControllerTest {
     }
 
     @Test
+    @DisplayName("GET /reportes/publico/dashboard: ya no existe un tablero público")
+    void dashboardPublico_noExiste() throws Exception {
+        mockMvc.perform(get("/api/v1/reportes/publico/dashboard")).andExpect(status().isNotFound());
+        verifyNoInteractions(consultarReportesUseCase);
+    }
+
+    @Test
     @DisplayName("GET /coordinador/reportes/dashboard: un administrador recibe 403")
     void dashboardCoordinador_admin_retorna403() throws Exception {
         autenticarComo("ADMIN", 1L);
@@ -269,14 +276,4 @@ class ReportesControllerTest {
         mockMvc.perform(get("/api/v1/coordinador/reportes/dashboard")).andExpect(status().isForbidden());
     }
 
-    @Test
-    @DisplayName("GET /reportes/publico/dashboard: consulta agregada con alcance público (RN44)")
-    void dashboardPublico_usaAlcancePublico() throws Exception {
-        when(consultarReportesUseCase.obtenerDashboard(argThat(f -> f != null && f.alcance() == AlcanceReporte.PUBLICO)))
-                .thenReturn(DASHBOARD);
-
-        mockMvc.perform(get("/api/v1/reportes/publico/dashboard"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.datos.kpis.semillerosActivos").value(4));
-    }
 }

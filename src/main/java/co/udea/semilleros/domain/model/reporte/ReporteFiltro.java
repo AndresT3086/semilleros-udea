@@ -85,11 +85,6 @@ public record ReporteFiltro(
                 idSemillero, AlcanceReporte.COORDINADOR, idCoordinadorAutenticado);
     }
 
-    public ReporteFiltro paraPublico() {
-        return new ReporteFiltro(periodo, anioCorte, fechaCorte, tipoUnidad, idUnidad, idCampus,
-                idSemillero, AlcanceReporte.PUBLICO, null);
-    }
-
     public ReporteFiltro sinSemillero() {
         return new ReporteFiltro(periodo, anioCorte, fechaCorte, tipoUnidad, idUnidad, idCampus,
                 null, alcance, idCoordinador);
