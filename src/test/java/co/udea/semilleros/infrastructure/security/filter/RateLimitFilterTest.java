@@ -101,6 +101,29 @@ class RateLimitFilterTest {
         verify(filterChain).doFilter(request, response);
     }
 
+    @Test
+    @DisplayName("doFilterInternal: permite 3 solicitudes de acceso por hora por IP, sin afectar el login")
+    void doFilterInternal_solicitudesDeAcceso_limitaA3() throws Exception {
+        when(request.getHeader("X-Forwarded-For")).thenReturn(null);
+        when(request.getRemoteAddr()).thenReturn("10.0.0.9");
+        StringWriter body = new StringWriter();
+        when(response.getWriter()).thenReturn(new PrintWriter(body));
+        when(request.getRequestURI()).thenReturn("/api/v1/solicitudes-acceso");
+
+        for (int i = 0; i < 4; i++) {
+            filter.doFilterInternal(request, response, filterChain);
+        }
+
+        verify(filterChain, times(3)).doFilter(request, response);
+        verify(response).setStatus(429);
+        assertThat(body.toString()).contains("DEMASIADAS_SOLICITUDES");
+
+        // El login de la misma IP tiene su propio límite
+        when(request.getRequestURI()).thenReturn("/api/v1/auth/login");
+        filter.doFilterInternal(request, response, filterChain);
+        verify(filterChain, times(4)).doFilter(request, response);
+    }
+
     private static int anyIntSafely() {
         return org.mockito.ArgumentMatchers.anyInt();
     }

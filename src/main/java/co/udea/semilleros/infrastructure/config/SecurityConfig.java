@@ -69,6 +69,9 @@ public class SecurityConfig {
                 // Autenticación de coordinadores
                 .requestMatchers(HttpMethod.POST, "/api/v1/auth/login").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/auth/captcha-math").permitAll()
+                // Registro de coordinadores (con límite por IP en RateLimitFilter)
+                .requestMatchers(HttpMethod.POST, "/api/v1/solicitudes-acceso", "/api/v1/solicitudes-acceso/verificar",
+                        "/api/v1/cuenta/activar").permitAll()
                 // Health check
                 .requestMatchers("/actuator/health").permitAll()
                 // Reportes y gestión exclusivos del rol administrador
