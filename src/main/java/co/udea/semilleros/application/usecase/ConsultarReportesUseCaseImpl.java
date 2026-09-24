@@ -205,7 +205,7 @@ public class ConsultarReportesUseCaseImpl implements ConsultarReportesUseCase {
             covarianza += (punto.anio() - mediaX) * (punto.semillerosActivos() - mediaY);
             varianza += Math.pow(punto.anio() - mediaX, 2);
         }
-        double pendiente = covarianza / varianza;
+        double pendiente = varianza == 0 ? 0 : covarianza / varianza;
         int siguiente = puntos.get(n - 1).anio() + 1;
         long ultimo = puntos.get(n - 1).semillerosActivos();
         long estimado = Math.round(mediaY + pendiente * (siguiente - mediaX));

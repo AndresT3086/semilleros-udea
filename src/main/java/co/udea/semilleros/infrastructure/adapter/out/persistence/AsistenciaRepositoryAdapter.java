@@ -18,6 +18,7 @@ import org.springframework.stereotype.Component;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
@@ -35,6 +36,52 @@ public class AsistenciaRepositoryAdapter implements AsistenciaRepositoryPort {
             COALESCE(SUM(CASE WHEN a.estado = 'PRESENTE' THEN 1 ELSE 0 END), 0) AS presentes,
             COALESCE(SUM(CASE WHEN a.estado = 'AUSENTE'  THEN 1 ELSE 0 END), 0) AS ausentes,
             COALESCE(SUM(CASE WHEN a.estado = 'EXCUSADO' THEN 1 ELSE 0 END), 0) AS excusados
+            """;
+
+    private static final String SELECT_SESION = """
+            SELECT ss.id_sesion, ss.id_semillero, ss.id_actividad, ac.nombre AS actividad, ss.titulo, ss.fecha,
+            """ + CONTEOS + """
+            FROM sesion_semillero ss
+            LEFT JOIN actividad_cientifica ac ON ac.id_actividad = ss.id_actividad
+            LEFT JOIN asistencia_sesion a ON a.id_sesion = ss.id_sesion
+            """;
+
+    private static final String AGRUPAR_SESION =
+            " GROUP BY ss.id_sesion, ss.id_semillero, ss.id_actividad, ac.nombre, ss.titulo, ss.fecha";
+
+    /** Sesiones (alias {@code ss}) dentro del rango; un extremo nulo no limita. */
+    private static final String EN_RANGO = """
+             AND (:desde IS NULL OR ss.fecha >= :desde)
+             AND (:hasta IS NULL OR ss.fecha <= :hasta)
+            """;
+
+    private static final String SESION_POR_ID = SELECT_SESION + " WHERE ss.id_sesion = :id" + AGRUPAR_SESION;
+
+    private static final String SESIONES_DEL_SEMILLERO = SELECT_SESION + " WHERE ss.id_semillero = :s" + EN_RANGO
+            + AGRUPAR_SESION + " ORDER BY ss.fecha DESC, ss.id_sesion DESC";
+
+    private static final String LISTA_DE_SESION = """
+            SELECT si.id, si.nombres, si.apellidos, si.cedula, a.estado
+            FROM asistencia_sesion a
+            JOIN semillero_integrante si ON si.id = a.id_integrante
+            WHERE a.id_sesion = :id
+            ORDER BY LOWER(si.apellidos), LOWER(si.nombres)
+            """;
+
+    private static final String ASISTENCIA_POR_INTEGRANTE = """
+            SELECT si.id, si.nombres, si.apellidos, si.cedula, si.activo,
+            """ + CONTEOS + """
+            FROM semillero_integrante si
+            LEFT JOIN (SELECT a2.id_integrante, a2.estado
+                       FROM asistencia_sesion a2
+                       JOIN sesion_semillero ss ON ss.id_sesion = a2.id_sesion
+                       WHERE ss.id_semillero = :s
+            """ + EN_RANGO + """
+            ) a ON a.id_integrante = si.id
+            WHERE si.id_semillero = :s
+            GROUP BY si.id, si.nombres, si.apellidos, si.cedula, si.activo
+            HAVING si.activo = TRUE OR COUNT(a.estado) > 0
+            ORDER BY LOWER(si.apellidos), LOWER(si.nombres)
             """;
 
     private final NamedParameterJdbcTemplate jdbc;
@@ -97,73 +144,31 @@ public class AsistenciaRepositoryAdapter implements AsistenciaRepositoryPort {
     @Override
     public Optional<SesionDetalle> obtenerSesion(Long idSesion) {
         MapSqlParameterSource parametros = new MapSqlParameterSource("id", idSesion);
-        List<Sesion> sesion = jdbc.query(consultaSesiones(" WHERE ss.id_sesion = :id"), parametros, filaSesion());
+        List<Sesion> sesion = jdbc.query(SESION_POR_ID, parametros, filaSesion());
         if (sesion.isEmpty()) {
             return Optional.empty();
         }
-        List<SesionDetalle.Asistente> asistentes = jdbc.query("""
-                SELECT si.id, si.nombres, si.apellidos, si.cedula, a.estado
-                FROM asistencia_sesion a
-                JOIN semillero_integrante si ON si.id = a.id_integrante
-                WHERE a.id_sesion = :id
-                ORDER BY LOWER(si.apellidos), LOWER(si.nombres)
-                """, parametros, (rs, i) -> new SesionDetalle.Asistente(
+        List<SesionDetalle.Asistente> asistentes = jdbc.query(LISTA_DE_SESION, parametros, (rs, i) -> new SesionDetalle.Asistente(
                 rs.getLong("id"), nombre(rs), rs.getString("cedula"), EstadoAsistencia.valueOf(rs.getString("estado"))));
         return Optional.of(new SesionDetalle(sesion.get(0), asistentes));
     }
 
     @Override
     public List<Sesion> listarSesiones(Long idSemillero, LocalDate desde, LocalDate hasta) {
-        MapSqlParameterSource parametros = new MapSqlParameterSource("s", idSemillero);
-        String where = " WHERE ss.id_semillero = :s" + rango(parametros, desde, hasta);
-        return jdbc.query(consultaSesiones(where) + " ORDER BY ss.fecha DESC, ss.id_sesion DESC", parametros, filaSesion());
+        return jdbc.query(SESIONES_DEL_SEMILLERO, rango(idSemillero, desde, hasta), filaSesion());
     }
 
     @Override
     public List<IntegranteAsistencia> asistenciaPorIntegrante(Long idSemillero, LocalDate desde, LocalDate hasta) {
-        MapSqlParameterSource parametros = new MapSqlParameterSource("s", idSemillero);
-        String sql = """
-                SELECT si.id, si.nombres, si.apellidos, si.cedula, si.activo,
-                """ + CONTEOS + """
-                FROM semillero_integrante si
-                LEFT JOIN (SELECT a2.id_integrante, a2.estado
-                           FROM asistencia_sesion a2
-                           JOIN sesion_semillero ss ON ss.id_sesion = a2.id_sesion
-                           WHERE ss.id_semillero = :s""" + rango(parametros, desde, hasta) + """
-                ) a ON a.id_integrante = si.id
-                WHERE si.id_semillero = :s
-                GROUP BY si.id, si.nombres, si.apellidos, si.cedula, si.activo
-                HAVING si.activo = TRUE OR COUNT(a.estado) > 0
-                ORDER BY LOWER(si.apellidos), LOWER(si.nombres)
-                """;
-        return jdbc.query(sql, parametros, (rs, i) -> new IntegranteAsistencia(
+        return jdbc.query(ASISTENCIA_POR_INTEGRANTE, rango(idSemillero, desde, hasta), (rs, i) -> new IntegranteAsistencia(
                 rs.getLong("id"), nombre(rs), rs.getString("cedula"), rs.getBoolean("activo"), conteo(rs)));
     }
 
-    private static String consultaSesiones(String where) {
-        return """
-                SELECT ss.id_sesion, ss.id_semillero, ss.id_actividad, ac.nombre AS actividad, ss.titulo, ss.fecha,
-                """ + CONTEOS + """
-                FROM sesion_semillero ss
-                LEFT JOIN actividad_cientifica ac ON ac.id_actividad = ss.id_actividad
-                LEFT JOIN asistencia_sesion a ON a.id_sesion = ss.id_sesion
-                """ + where + """
-                 GROUP BY ss.id_sesion, ss.id_semillero, ss.id_actividad, ac.nombre, ss.titulo, ss.fecha
-                """;
-    }
-
-    /** Condiciones de fecha sobre el alias {@code ss}; solo para los extremos presentes. */
-    private static String rango(MapSqlParameterSource parametros, LocalDate desde, LocalDate hasta) {
-        StringBuilder sql = new StringBuilder();
-        if (desde != null) {
-            sql.append(" AND ss.fecha >= :desde");
-            parametros.addValue("desde", desde);
-        }
-        if (hasta != null) {
-            sql.append(" AND ss.fecha <= :hasta");
-            parametros.addValue("hasta", hasta);
-        }
-        return sql.toString();
+    /** Semillero y extremos del rango con tipo SQL, para que PostgreSQL acepte los nulos. */
+    private static MapSqlParameterSource rango(Long idSemillero, LocalDate desde, LocalDate hasta) {
+        return new MapSqlParameterSource("s", idSemillero)
+                .addValue("desde", desde, Types.DATE)
+                .addValue("hasta", hasta, Types.DATE);
     }
 
     private void insertarAsistencias(Long idSesion, List<DatosSesion.Registro> asistencias) {
@@ -180,7 +185,7 @@ public class AsistenciaRepositoryAdapter implements AsistenciaRepositoryPort {
     private static MapSqlParameterSource parametrosSesion(DatosSesion datos) {
         return new MapSqlParameterSource("titulo", datos.titulo().trim())
                 .addValue("fecha", datos.fecha())
-                .addValue("actividad", datos.idActividad(), java.sql.Types.BIGINT);
+                .addValue("actividad", datos.idActividad(), Types.BIGINT);
     }
 
     private static RowMapper<Sesion> filaSesion() {

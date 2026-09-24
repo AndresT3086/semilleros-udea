@@ -141,4 +141,15 @@ class ReporteFiltroTest {
         assertThatThrownBy(() -> FormatoExportacion.de("docx")).isInstanceOf(FiltroReporteInvalidoException.class);
         assertThatThrownBy(() -> FormatoExportacion.de(null)).isInstanceOf(FiltroReporteInvalidoException.class);
     }
+
+    @Test
+    @DisplayName("ReporteArchivo: compara el contenido del arreglo y no lo expone en toString")
+    void reporteArchivo_equalsPorContenido() {
+        ReporteArchivo uno = new ReporteArchivo("a.csv", "text/csv", new byte[]{1, 2});
+        ReporteArchivo igual = new ReporteArchivo("a.csv", "text/csv", new byte[]{1, 2});
+
+        assertThat(uno).isEqualTo(igual).hasSameHashCodeAs(igual);
+        assertThat(uno).isNotEqualTo(new ReporteArchivo("a.csv", "text/csv", new byte[]{3}));
+        assertThat(uno).hasToString("ReporteArchivo[nombre=a.csv, contentType=text/csv, bytes=2]");
+    }
 }
