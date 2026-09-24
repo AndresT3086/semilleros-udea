@@ -35,11 +35,10 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import java.util.List;
 
 /**
- * Reportes y estadísticas (HU1-HU14) con tres alcances (HU12):
+ * Reportes y estadísticas (HU1-HU14). Requieren sesión y el alcance depende del rol (HU12):
  * <ul>
  *     <li>{@code /api/v1/admin/reportes}: administrador, datos globales y exportación</li>
  *     <li>{@code /api/v1/coordinador/reportes}: coordinador, solo sus semilleros</li>
- *     <li>{@code /api/v1/reportes/publico}: agregados anónimos para semilleristas y visitantes</li>
  * </ul>
  */
 @RestController
@@ -49,7 +48,6 @@ public class ReportesController {
 
     private static final String ADMIN = "/api/v1/admin/reportes";
     private static final String COORDINADOR = "/api/v1/coordinador/reportes";
-    private static final String PUBLICO = "/api/v1/reportes/publico";
 
     private final ConsultarReportesUseCase consultarReportesUseCase;
     private final ReportesEventosPublisher reportesEventosPublisher;
@@ -168,16 +166,6 @@ public class ReportesController {
     ) {
         return ResponseEntity.ok(ApiResponse.exito(
                 consultarReportesUseCase.listarSemilleros(filtro.toFiltro().paraCoordinador(principal.getId()))));
-    }
-
-    // ─── Público: estadísticas agregadas y anónimas (RN44) ──────────────────────
-
-    @GetMapping(PUBLICO + "/dashboard")
-    @Operation(summary = "Estadísticas generales del programa", description = "Indicadores y gráficos agregados. "
-            + "No incluye detalle por semillero ni permite filtrar un semillero específico.")
-    public ResponseEntity<ApiResponse<ReporteDashboard>> dashboardPublico(@ModelAttribute ReporteFiltroRequest filtro) {
-        return ResponseEntity.ok(ApiResponse.exito(
-                consultarReportesUseCase.obtenerDashboard(filtro.toFiltro().paraPublico())));
     }
 
     private ResponseEntity<ApiResponse<PageResponse<ReporteRendimiento>>> rendimiento(

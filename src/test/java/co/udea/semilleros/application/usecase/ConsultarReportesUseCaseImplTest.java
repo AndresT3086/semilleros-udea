@@ -123,15 +123,6 @@ class ConsultarReportesUseCaseImplTest {
     }
 
     @Test
-    @DisplayName("obtenerKpis: el público no puede consultar un semillero específico (RN44)")
-    void obtenerKpis_publicoConSemillero_lanzaAccesoNoAutorizado() {
-        ReporteFiltro publico = ReporteFiltro.de(null, null, null, null, 7L).paraPublico();
-
-        assertThatThrownBy(() -> useCase.obtenerKpis(publico)).isInstanceOf(AccesoNoAutorizadoException.class);
-        verifyNoInteractions(reportesRepositoryPort);
-    }
-
-    @Test
     @DisplayName("obtenerKpis: un coordinador no puede consultar semilleros de otro coordinador (RN43/RN45)")
     void obtenerKpis_coordinadorSemilleroAjeno_lanzaAccesoNoAutorizado() {
         ReporteFiltro filtro = ReporteFiltro.de(null, null, null, null, 7L).paraCoordinador(5L);
@@ -270,30 +261,12 @@ class ConsultarReportesUseCaseImplTest {
     }
 
     @Test
-    @DisplayName("obtenerRendimiento: el público no accede a la tabla por semillero (RN44)")
-    void obtenerRendimiento_publico_lanzaAccesoNoAutorizado() {
-        ReporteFiltro publico = filtro(null).paraPublico();
-
-        assertThatThrownBy(() -> useCase.obtenerRendimiento(publico, 0, 10, OrdenRendimiento.NOMBRE, true))
-                .isInstanceOf(AccesoNoAutorizadoException.class);
-        verify(reportesRepositoryPort, org.mockito.Mockito.never()).rendimiento(any(), anyInt(), anyInt(), any(), eq(true));
-    }
-
-    @Test
     @DisplayName("listarSemilleros: lista los activos ignorando el semillero seleccionado")
     void listarSemilleros_ignoraSemilleroSeleccionado() {
         List<ReporteOpcion> opciones = List.of(new ReporteOpcion(1L, "Semillero IA"));
         when(reportesRepositoryPort.semillerosActivos(argThat(f -> f != null && f.idSemillero() == null))).thenReturn(opciones);
 
         assertThat(useCase.listarSemilleros(ReporteFiltro.de(null, null, null, null, 4L))).isEqualTo(opciones);
-    }
-
-    @Test
-    @DisplayName("listarSemilleros: el público no puede listar semilleros para filtrar")
-    void listarSemilleros_publico_lanzaAccesoNoAutorizado() {
-        ReporteFiltro publico = filtro(null).paraPublico();
-
-        assertThatThrownBy(() -> useCase.listarSemilleros(publico)).isInstanceOf(AccesoNoAutorizadoException.class);
     }
 
     @Test

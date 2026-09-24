@@ -262,6 +262,13 @@ class ReportesControllerTest {
     }
 
     @Test
+    @DisplayName("GET /reportes/publico/dashboard: ya no existe un tablero público")
+    void dashboardPublico_noExiste() throws Exception {
+        mockMvc.perform(get("/api/v1/reportes/publico/dashboard")).andExpect(status().isNotFound());
+        verifyNoInteractions(consultarReportesUseCase);
+    }
+
+    @Test
     @DisplayName("GET /coordinador/reportes/dashboard: un administrador recibe 403")
     void dashboardCoordinador_admin_retorna403() throws Exception {
         autenticarComo("ADMIN", 1L);
@@ -269,14 +276,4 @@ class ReportesControllerTest {
         mockMvc.perform(get("/api/v1/coordinador/reportes/dashboard")).andExpect(status().isForbidden());
     }
 
-    @Test
-    @DisplayName("GET /reportes/publico/dashboard: consulta agregada con alcance público (RN44)")
-    void dashboardPublico_usaAlcancePublico() throws Exception {
-        when(consultarReportesUseCase.obtenerDashboard(argThat(f -> f != null && f.alcance() == AlcanceReporte.PUBLICO)))
-                .thenReturn(DASHBOARD);
-
-        mockMvc.perform(get("/api/v1/reportes/publico/dashboard"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.datos.kpis.semillerosActivos").value(4));
-    }
 }

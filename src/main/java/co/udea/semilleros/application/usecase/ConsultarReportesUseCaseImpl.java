@@ -98,7 +98,6 @@ public class ConsultarReportesUseCaseImpl implements ConsultarReportesUseCase {
     public PageResult<ReporteRendimiento> obtenerRendimiento(ReporteFiltro filtro, int pagina, int tamano,
                                                              OrdenRendimiento orden, boolean ascendente) {
         validarAlcance(filtro);
-        validarDetallePermitido(filtro);
         int paginaValida = Math.max(0, pagina);
         int tamanoValido = Math.clamp(tamano, 1, TAMANO_MAXIMO_PAGINA);
         return reportesRepositoryPort.rendimiento(filtro, paginaValida, tamanoValido, orden, ascendente);
@@ -106,14 +105,12 @@ public class ConsultarReportesUseCaseImpl implements ConsultarReportesUseCase {
 
     @Override
     public List<ReporteOpcion> listarSemilleros(ReporteFiltro filtro) {
-        validarDetallePermitido(filtro);
         return reportesRepositoryPort.semillerosActivos(filtro.sinSemillero());
     }
 
     @Override
     public ReporteArchivo exportar(ReporteFiltro filtro, FormatoExportacion formato,
                                    OrdenRendimiento orden, boolean ascendente) {
-        validarDetallePermitido(filtro);
         ReporteDashboard dashboard = obtenerDashboard(filtro);
         List<ReporteRendimiento> filas = reportesRepositoryPort.rendimientoCompleto(filtro, orden, ascendente);
         LocalDateTime ahora = LocalDateTime.now(clock);
@@ -129,15 +126,12 @@ public class ConsultarReportesUseCaseImpl implements ConsultarReportesUseCase {
     }
 
     /**
-     * RN43/RN45: un coordinador solo consulta sus semilleros y el público nunca
-     * accede al detalle de un semillero específico.
+     * RN43/RN45: un coordinador solo consulta sus semilleros. Además de este chequeo, todas
+     * las consultas del coordinador se limitan en SQL a los semilleros que coordina.
      */
     private void validarAlcance(ReporteFiltro filtro) {
         if (filtro.idSemillero() == null) {
             return;
-        }
-        if (filtro.alcance() == AlcanceReporte.PUBLICO) {
-            throw new AccesoNoAutorizadoException("reporte de un semillero específico");
         }
         if (filtro.alcance() == AlcanceReporte.COORDINADOR) {
             boolean esPropio = semilleroRepositoryPort.buscarPorId(filtro.idSemillero())
@@ -146,13 +140,6 @@ public class ConsultarReportesUseCaseImpl implements ConsultarReportesUseCase {
             if (!esPropio) {
                 throw new AccesoNoAutorizadoException("reporte del semillero " + filtro.idSemillero());
             }
-        }
-    }
-
-    /** RN44: el alcance público solo ve información agregada y anonimizada. */
-    private void validarDetallePermitido(ReporteFiltro filtro) {
-        if (filtro.alcance() == AlcanceReporte.PUBLICO) {
-            throw new AccesoNoAutorizadoException("detalle de semilleros");
         }
     }
 
