@@ -175,6 +175,7 @@ Cada excepción de dominio extiende `SemillerosException` y tiene su propio `err
 | `MAIL_USERNAME` | Usuario SMTP | `correo@udea.edu.co` |
 | `MAIL_PASSWORD` | Contraseña SMTP | (secreto) |
 | `APP_ADMIN_CORREO` | Correo del administrador | `admin@udea.edu.co` |
+| `REPORTES_INTERVALO_MS` | Cada cuánto se verifican cambios para actualizar los reportes en tiempo real | `60000` |
 
 ---
 
