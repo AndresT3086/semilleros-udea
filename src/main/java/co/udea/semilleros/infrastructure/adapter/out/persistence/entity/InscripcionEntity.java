@@ -40,6 +40,9 @@ public class InscripcionEntity {
     @Column(name = "telefono", nullable = false, length = 15)
     private String telefono;
 
+    @Column(name = "sexo", length = 20)
+    private String sexo;
+
     @Column(name = "programa", length = 200)
     private String programa;
 

@@ -21,6 +21,7 @@ public class Inscripcion {
     private final String cedula;
     private final String correo;
     private final String telefono;
+    private final String sexo;
     private final String programa;
     private final String semestre;
     private final String motivacion;

@@ -38,6 +38,7 @@ public class GestionarSemilleroUseCaseImpl implements GestionarSemilleroUseCase 
     private final FiltrosRepositoryPort filtrosRepositoryPort;
 
     private static final String SEMILLERO = "Semillero";
+    private static final String ROL_INTEGRANTE_POR_DEFECTO = "ESTUDIANTE_INVESTIGADOR";
 
     @Value("${app.admin.correo:admin@udea.edu.co}")
     private String correoAdministrador;
@@ -208,7 +209,8 @@ public class GestionarSemilleroUseCaseImpl implements GestionarSemilleroUseCase 
                 inscripcion.getApellidos(),
                 inscripcion.getCedula(),
                 inscripcion.getCorreo(),
-                "ESTUDIANTE"
+                inscripcion.getSexo(),
+                ROL_INTEGRANTE_POR_DEFECTO
         );
 
         return guardada;

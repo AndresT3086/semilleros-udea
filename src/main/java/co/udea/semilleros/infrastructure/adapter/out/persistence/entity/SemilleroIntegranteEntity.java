@@ -36,6 +36,9 @@ public class SemilleroIntegranteEntity {
     @Column(name = "correo", length = 150)
     private String correo;
 
+    @Column(name = "sexo", length = 20)
+    private String sexo;
+
     @Column(name = "tipo_vinculacion", length = 50)
     private String tipoVinculacion;
 

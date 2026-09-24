@@ -8,6 +8,7 @@ public interface SemilleroIntegranteRepositoryPort {
             String apellidos,
             String cedula,
             String correo,
+            String sexo,
             String tipoVinculacion
     );
 
