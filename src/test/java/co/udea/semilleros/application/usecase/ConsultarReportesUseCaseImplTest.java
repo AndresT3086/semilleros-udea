@@ -3,10 +3,12 @@ package co.udea.semilleros.application.usecase;
 import co.udea.semilleros.domain.exception.AccesoNoAutorizadoException;
 import co.udea.semilleros.domain.model.PageResult;
 import co.udea.semilleros.domain.model.Semillero;
+import co.udea.semilleros.domain.model.asistencia.ConteoAsistencia;
 import co.udea.semilleros.domain.model.reporte.AlcanceReporte;
 import co.udea.semilleros.domain.model.reporte.FormatoExportacion;
 import co.udea.semilleros.domain.model.reporte.OrdenRendimiento;
 import co.udea.semilleros.domain.model.reporte.ReporteArchivo;
+import co.udea.semilleros.domain.model.reporte.ReporteAsistencia;
 import co.udea.semilleros.domain.model.reporte.ReporteCompleto;
 import co.udea.semilleros.domain.model.reporte.ReporteConteo;
 import co.udea.semilleros.domain.model.reporte.ReporteDashboard;
@@ -173,6 +175,8 @@ class ConsultarReportesUseCaseImplTest {
         when(reportesRepositoryPort.integrantesPorRol(filtro)).thenReturn(roles);
         when(reportesRepositoryPort.actividadesPorTipo(filtro)).thenReturn(actividades);
         when(reportesRepositoryPort.semillerosCreadosPorAnio(any())).thenReturn(Map.of(2025, 2L, 2026, 1L));
+        ReporteAsistencia asistencia = new ReporteAsistencia(4, new ConteoAsistencia(30, 10, 2));
+        when(reportesRepositoryPort.asistencia(filtro)).thenReturn(asistencia);
 
         ReporteDashboard dashboard = useCase.obtenerDashboard(filtro);
 
@@ -182,6 +186,7 @@ class ConsultarReportesUseCaseImplTest {
         assertThat(dashboard.porSexo()).isEqualTo(sexo);
         assertThat(dashboard.porRol()).isEqualTo(roles);
         assertThat(dashboard.actividadesPorTipo()).isEqualTo(actividades);
+        assertThat(dashboard.asistencia()).isEqualTo(asistencia);
         assertThat(dashboard.evolucion()).extracting(ReporteEvolucion::anio).containsExactly(2025, 2026);
         assertThat(dashboard.kpis()).isNotNull();
     }
@@ -294,7 +299,7 @@ class ConsultarReportesUseCaseImplTest {
     void exportar_generaArchivoConNombreConFecha() {
         ReporteFiltro filtro = ReporteFiltro.de("2026", "FACULTAD", null, null, null);
         List<ReporteRendimiento> filas = List.of(new ReporteRendimiento(1L, "Semillero IA", "SEM-1",
-                "Facultad de Ingeniería", TipoUnidad.FACULTAD, "Medellín", 10, 4, null, "ACTIVO"));
+                "Facultad de Ingeniería", TipoUnidad.FACULTAD, "Medellín", 10, 4, 6, 75.0, "ACTIVO"));
         when(reportesRepositoryPort.rendimientoCompleto(filtro, OrdenRendimiento.NOMBRE, true)).thenReturn(filas);
         when(reportesRepositoryPort.semillerosCreadosPorAnio(any())).thenReturn(Map.of());
         when(exportadorReportePort.exportar(any(), eq(FormatoExportacion.XLSX))).thenReturn(new byte[]{1, 2, 3});

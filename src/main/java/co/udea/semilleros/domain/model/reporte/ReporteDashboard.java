@@ -13,6 +13,7 @@ public record ReporteDashboard(
         List<ReporteConteo> porSexo,
         List<ReporteConteo> porRol,
         List<ReporteEvolucion> evolucion,
-        List<ReporteConteo> actividadesPorTipo
+        List<ReporteConteo> actividadesPorTipo,
+        ReporteAsistencia asistencia
 ) {
 }

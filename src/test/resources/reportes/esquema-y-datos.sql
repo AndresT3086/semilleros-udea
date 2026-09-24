@@ -25,6 +25,11 @@ CREATE TABLE semillero_integrante (
 CREATE TABLE actividad_cientifica (id_actividad BIGINT PRIMARY KEY, nombre VARCHAR(200) NOT NULL);
 CREATE TABLE semillero_actividad (id_semillero BIGINT, id_actividad BIGINT, realiza BOOLEAN NOT NULL);
 CREATE TABLE rol_integrante (codigo VARCHAR(50) PRIMARY KEY, nombre VARCHAR(100) NOT NULL, orden INTEGER NOT NULL);
+CREATE TABLE sesion_semillero (
+    id_sesion BIGINT PRIMARY KEY, id_semillero BIGINT NOT NULL, fecha DATE NOT NULL,
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP, fecha_actualizacion TIMESTAMP
+);
+CREATE TABLE asistencia_sesion (id_sesion BIGINT NOT NULL, id_integrante BIGINT NOT NULL, estado VARCHAR(20) NOT NULL);
 CREATE TABLE inscripcion (id_inscripcion BIGINT PRIMARY KEY, estado VARCHAR(20), fecha_actualizacion TIMESTAMP);
 
 INSERT INTO campus VALUES (1, 'Medellín'), (2, 'Apartadó'), (3, 'Caucasia');
@@ -65,3 +70,12 @@ INSERT INTO rol_integrante VALUES
 ('SEMILLERISTA_JUNIOR', 'Semillerista Junior', 5);
 
 INSERT INTO inscripcion VALUES (1, 'PENDIENTE', NULL);
+
+-- Sesiones: dos del semillero 1, una del 2 y una del semillero inactivo 5
+INSERT INTO sesion_semillero (id_sesion, id_semillero, fecha) VALUES
+(1, 1, DATE '2025-03-10'), (2, 1, DATE '2026-02-01'), (3, 2, DATE '2026-08-01'), (4, 5, DATE '2026-01-10');
+INSERT INTO asistencia_sesion VALUES
+(1, 1, 'PRESENTE'), (1, 2, 'AUSENTE'),
+(2, 1, 'PRESENTE'), (2, 2, 'EXCUSADO'),
+(3, 3, 'AUSENTE'),
+(4, 6, 'PRESENTE');

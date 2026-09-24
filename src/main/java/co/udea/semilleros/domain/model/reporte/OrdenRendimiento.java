@@ -8,7 +8,7 @@ import java.util.Locale;
  * Columnas por las que se puede ordenar la tabla de rendimiento (HU9).
  */
 public enum OrdenRendimiento {
-    NOMBRE, UNIDAD, TIPO, CAMPUS, PARTICIPANTES, ACTIVIDADES, ESTADO;
+    NOMBRE, UNIDAD, TIPO, CAMPUS, PARTICIPANTES, ACTIVIDADES, SESIONES, ASISTENCIA, ESTADO;
 
     public static OrdenRendimiento de(String valor) {
         if (valor == null || valor.isBlank()) {

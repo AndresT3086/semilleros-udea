@@ -1,7 +1,9 @@
 package co.udea.semilleros.infrastructure.adapter.out.persistence;
 
 import co.udea.semilleros.domain.model.PageResult;
+import co.udea.semilleros.domain.model.asistencia.ConteoAsistencia;
 import co.udea.semilleros.domain.model.reporte.OrdenRendimiento;
+import co.udea.semilleros.domain.model.reporte.ReporteAsistencia;
 import co.udea.semilleros.domain.model.reporte.ReporteConteo;
 import co.udea.semilleros.domain.model.reporte.ReporteFiltro;
 import co.udea.semilleros.domain.model.reporte.ReporteOpcion;
@@ -53,13 +55,15 @@ public class ReportesRepositoryAdapter implements ReportesRepositoryPort {
     }
 
     private static final Map<OrdenRendimiento, String> COLUMNAS_ORDEN = new EnumMap<>(Map.of(
-            OrdenRendimiento.NOMBRE, "LOWER(s.nombre)",
-            OrdenRendimiento.UNIDAD, "LOWER(ua.nombre)",
-            OrdenRendimiento.TIPO, "LOWER(ua.nombre)",
-            OrdenRendimiento.CAMPUS, "LOWER(c.nombre)",
-            OrdenRendimiento.PARTICIPANTES, "participantes",
-            OrdenRendimiento.ACTIVIDADES, "actividades",
-            OrdenRendimiento.ESTADO, "s.estado"
+            OrdenRendimiento.NOMBRE, "LOWER(r.nombre)",
+            OrdenRendimiento.UNIDAD, "LOWER(r.unidad)",
+            OrdenRendimiento.TIPO, "LOWER(r.unidad)",
+            OrdenRendimiento.CAMPUS, "LOWER(r.campus)",
+            OrdenRendimiento.PARTICIPANTES, "r.participantes",
+            OrdenRendimiento.ACTIVIDADES, "r.actividades",
+            OrdenRendimiento.SESIONES, "r.sesiones",
+            OrdenRendimiento.ASISTENCIA, "porcentaje_asistencia",
+            OrdenRendimiento.ESTADO, "r.estado"
     ));
 
     private final NamedParameterJdbcTemplate jdbc;
@@ -72,6 +76,12 @@ public class ReportesRepositoryAdapter implements ReportesRepositoryPort {
             return parametros.hasValue("fechaCorte")
                     ? " AND (si.fecha_ingreso IS NULL OR si.fecha_ingreso <= :fechaCorte)"
                     : "";
+        }
+
+        /** Sesiones (alias {@code ss}) cuya fecha cae dentro del período del filtro. */
+        String sesionesEnPeriodo() {
+            return (parametros.hasValue("inicioPeriodo") ? " AND ss.fecha >= :inicioPeriodo" : "")
+                    + (parametros.hasValue("fechaCorte") ? " AND ss.fecha <= :fechaCorte" : "");
         }
     }
 
@@ -86,6 +96,9 @@ public class ReportesRepositoryAdapter implements ReportesRepositoryPort {
         }
         if (filtro.fechaCorte() != null) {
             parametros.addValue("fechaCorte", filtro.fechaCorte());
+        }
+        if (filtro.inicioPeriodo() != null) {
+            parametros.addValue("inicioPeriodo", filtro.inicioPeriodo());
         }
         agregarIgualdad(sql, parametros, "s.id_unidad_academica", "idUnidad", filtro.idUnidad());
         agregarIgualdad(sql, parametros, "s.id_campus", "idCampus", filtro.idCampus());
@@ -244,6 +257,23 @@ public class ReportesRepositoryAdapter implements ReportesRepositoryPort {
     }
 
     @Override
+    public ReporteAsistencia asistencia(ReporteFiltro filtro) {
+        Condiciones c = condiciones(filtro, false);
+        String sql = """
+                SELECT COUNT(DISTINCT ss.id_sesion) AS sesiones,
+                       COALESCE(SUM(CASE WHEN a.estado = 'PRESENTE' THEN 1 ELSE 0 END), 0) AS presentes,
+                       COALESCE(SUM(CASE WHEN a.estado = 'AUSENTE'  THEN 1 ELSE 0 END), 0) AS ausentes,
+                       COALESCE(SUM(CASE WHEN a.estado = 'EXCUSADO' THEN 1 ELSE 0 END), 0) AS excusados
+                 FROM sesion_semillero ss
+                 JOIN semillero s ON s.id_semillero = ss.id_semillero
+                 LEFT JOIN unidad_academica ua ON ua.id_unidad = s.id_unidad_academica
+                 LEFT JOIN asistencia_sesion a ON a.id_sesion = ss.id_sesion
+                """ + c.sql() + c.sesionesEnPeriodo();
+        return jdbc.queryForObject(sql, c.parametros(), (rs, i) -> new ReporteAsistencia(rs.getLong("sesiones"),
+                new ConteoAsistencia(rs.getLong("presentes"), rs.getLong("ausentes"), rs.getLong("excusados"))));
+    }
+
+    @Override
     public PageResult<ReporteRendimiento> rendimiento(ReporteFiltro filtro, int pagina, int tamano,
                                                       OrdenRendimiento orden, boolean ascendente) {
         Condiciones c = condiciones(filtro, true);
@@ -273,18 +303,30 @@ public class ReportesRepositoryAdapter implements ReportesRepositoryPort {
 
     private static String consultaRendimiento(Condiciones c, OrdenRendimiento orden, boolean ascendente) {
         String columna = COLUMNAS_ORDEN.get(Optional.ofNullable(orden).orElse(OrdenRendimiento.NOMBRE));
+        String asistencia = "(SELECT COALESCE(SUM(CASE WHEN a.estado = '%s' THEN 1 ELSE 0 END), 0)"
+                + " FROM asistencia_sesion a JOIN sesion_semillero ss ON ss.id_sesion = a.id_sesion"
+                + " WHERE ss.id_semillero = s.id_semillero" + c.sesionesEnPeriodo() + ")";
+        // La consulta interna calcula las métricas; la externa permite ordenar por el porcentaje
         return """
+                SELECT r.*, CASE WHEN r.presentes + r.ausentes = 0 THEN NULL
+                                 ELSE r.presentes * 100.0 / (r.presentes + r.ausentes) END AS porcentaje_asistencia
+                FROM (
                 SELECT s.id_semillero AS id, s.nombre AS nombre, s.codigo AS codigo,
                        ua.nombre AS unidad, c.nombre AS campus, s.estado AS estado,
                        (SELECT COUNT(DISTINCT si.cedula) FROM semillero_integrante si
                          WHERE si.id_semillero = s.id_semillero AND si.activo = TRUE %s) AS participantes,
                        (SELECT COUNT(*) FROM semillero_actividad sa
-                         WHERE sa.id_semillero = s.id_semillero AND sa.realiza = TRUE) AS actividades
-                """.formatted(c.integrantesHastaCorte())
+                         WHERE sa.id_semillero = s.id_semillero AND sa.realiza = TRUE) AS actividades,
+                       (SELECT COUNT(*) FROM sesion_semillero ss
+                         WHERE ss.id_semillero = s.id_semillero %s) AS sesiones,
+                       %s AS presentes,
+                       %s AS ausentes
+                """.formatted(c.integrantesHastaCorte(), c.sesionesEnPeriodo(),
+                        asistencia.formatted("PRESENTE"), asistencia.formatted("AUSENTE"))
                 + DESDE_SEMILLERO
                 + " LEFT JOIN campus c ON c.id_campus = s.id_campus"
                 + c.sql()
-                + " ORDER BY " + columna + (ascendente ? " ASC" : " DESC") + ", s.id_semillero";
+                + ") r ORDER BY " + columna + (ascendente ? " ASC" : " DESC") + " NULLS LAST, r.id";
     }
 
     private static RowMapper<ReporteRendimiento> filaRendimiento() {
@@ -297,7 +339,8 @@ public class ReportesRepositoryAdapter implements ReportesRepositoryPort {
                 rs.getString("campus"),
                 rs.getLong("participantes"),
                 rs.getLong("actividades"),
-                null,
+                rs.getLong("sesiones"),
+                ConteoAsistencia.porcentaje(rs.getLong("presentes"), rs.getLong("ausentes")),
                 rs.getString("estado"));
     }
 
@@ -319,6 +362,10 @@ public class ReportesRepositoryAdapter implements ReportesRepositoryPort {
                   (SELECT COUNT(*) FROM semillero_integrante WHERE activo = TRUE), '|',
                   (SELECT COUNT(*) FROM semillero_actividad WHERE realiza = TRUE), '|',
                   (SELECT COUNT(*) FROM inscripcion), '|',
+                  (SELECT COUNT(*) FROM sesion_semillero), '|',
+                  (SELECT COUNT(*) FROM asistencia_sesion), '|',
+                  (SELECT COALESCE(CAST(MAX(COALESCE(fecha_actualizacion, fecha_creacion)) AS VARCHAR(40)), '-')
+                     FROM sesion_semillero), '|',
                   (SELECT COALESCE(CAST(MAX(fecha_actualizacion) AS VARCHAR(40)), '-') FROM inscripcion))
                 """, new MapSqlParameterSource(), String.class);
     }

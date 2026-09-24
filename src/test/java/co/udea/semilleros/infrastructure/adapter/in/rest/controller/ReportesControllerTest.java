@@ -2,10 +2,12 @@ package co.udea.semilleros.infrastructure.adapter.in.rest.controller;
 
 import co.udea.semilleros.domain.exception.AccesoNoAutorizadoException;
 import co.udea.semilleros.domain.model.PageResult;
+import co.udea.semilleros.domain.model.asistencia.ConteoAsistencia;
 import co.udea.semilleros.domain.model.reporte.AlcanceReporte;
 import co.udea.semilleros.domain.model.reporte.FormatoExportacion;
 import co.udea.semilleros.domain.model.reporte.OrdenRendimiento;
 import co.udea.semilleros.domain.model.reporte.ReporteArchivo;
+import co.udea.semilleros.domain.model.reporte.ReporteAsistencia;
 import co.udea.semilleros.domain.model.reporte.ReporteDashboard;
 import co.udea.semilleros.domain.model.reporte.ReporteFiltro;
 import co.udea.semilleros.domain.model.reporte.ReporteKpis;
@@ -78,7 +80,7 @@ class ReportesControllerTest {
             LocalDateTime.of(2026, 9, 24, 10, 30), AlcanceReporte.ADMIN);
 
     private static final ReporteDashboard DASHBOARD = new ReporteDashboard(KPIS, List.of(), List.of(), List.of(),
-            List.of(), List.of(), List.of(), List.of());
+            List.of(), List.of(), List.of(), List.of(), new ReporteAsistencia(0, ConteoAsistencia.VACIO));
 
     private static void autenticarComo(String rol, Long id) {
         SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(
@@ -147,7 +149,7 @@ class ReportesControllerTest {
     void rendimientoAdmin_paginado() throws Exception {
         autenticarComo("ADMIN", 1L);
         ReporteRendimiento fila = new ReporteRendimiento(1L, "Semillero IA", "SEM-1", "Facultad de Ingeniería",
-                TipoUnidad.FACULTAD, "Medellín", 10, 4, null, "ACTIVO");
+                TipoUnidad.FACULTAD, "Medellín", 10, 4, 6, 83.3, "ACTIVO");
         when(consultarReportesUseCase.obtenerRendimiento(any(), eq(1), eq(5), eq(OrdenRendimiento.PARTICIPANTES), eq(false)))
                 .thenReturn(PageResult.<ReporteRendimiento>builder().contenido(List.of(fila)).paginaActual(1).tamano(5)
                         .totalElementos(6).totalPaginas(2).esUltimaPagina(true).build());
@@ -158,6 +160,7 @@ class ReportesControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.datos.contenido[0].nombre").value("Semillero IA"))
                 .andExpect(jsonPath("$.datos.contenido[0].tipoUnidad").value("FACULTAD"))
+                .andExpect(jsonPath("$.datos.contenido[0].porcentajeAsistencia").value(83.3))
                 .andExpect(jsonPath("$.datos.totalElementos").value(6))
                 .andExpect(jsonPath("$.datos.esUltimaPagina").value(true));
     }

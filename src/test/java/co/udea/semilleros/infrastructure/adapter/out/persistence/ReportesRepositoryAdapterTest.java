@@ -1,7 +1,9 @@
 package co.udea.semilleros.infrastructure.adapter.out.persistence;
 
 import co.udea.semilleros.domain.model.PageResult;
+import co.udea.semilleros.domain.model.asistencia.ConteoAsistencia;
 import co.udea.semilleros.domain.model.reporte.OrdenRendimiento;
+import co.udea.semilleros.domain.model.reporte.ReporteAsistencia;
 import co.udea.semilleros.domain.model.reporte.ReporteConteo;
 import co.udea.semilleros.domain.model.reporte.ReporteFiltro;
 import co.udea.semilleros.domain.model.reporte.ReporteOpcion;
@@ -209,6 +211,35 @@ class ReportesRepositoryAdapterTest {
     }
 
     @Test
+    @DisplayName("asistencia: suma asistencias esperadas descontando excusas, dentro del período")
+    void asistencia_agregada() {
+        assertThat(adapter.asistencia(todos()))
+                .isEqualTo(new ReporteAsistencia(3, new ConteoAsistencia(2, 2, 1)));
+        assertThat(adapter.asistencia(todos()).asistencia().porcentaje()).isEqualTo(50.0);
+        assertThat(adapter.asistencia(ReporteFiltro.de("2026-2", null, null, null, null)))
+                .isEqualTo(new ReporteAsistencia(1, new ConteoAsistencia(0, 1, 0)));
+        assertThat(adapter.asistencia(ReporteFiltro.de(null, null, null, null, 3L)))
+                .isEqualTo(new ReporteAsistencia(0, ConteoAsistencia.VACIO));
+    }
+
+    @Test
+    @DisplayName("rendimiento: actividades registradas y % de asistencia por semillero, ordenable (HU9)")
+    void rendimiento_asistencia() {
+        assertThat(adapter.rendimientoCompleto(todos(), OrdenRendimiento.ASISTENCIA, false))
+                .extracting(ReporteRendimiento::nombre, ReporteRendimiento::sesiones, ReporteRendimiento::porcentajeAsistencia)
+                .containsExactly(
+                        tuple("Inactivo", 1L, 100.0),
+                        tuple("Semillero IA", 2L, 66.7),
+                        tuple("Robótica", 1L, 0.0),
+                        tuple("Lenguas", 0L, null),
+                        tuple("Ambiental", 0L, null));
+        assertThat(adapter.rendimientoCompleto(ReporteFiltro.de("2026", null, null, null, 1L), OrdenRendimiento.SESIONES, true))
+                .singleElement()
+                .extracting(ReporteRendimiento::sesiones, ReporteRendimiento::porcentajeAsistencia)
+                .containsExactly(1L, 100.0);
+    }
+
+    @Test
     @DisplayName("semillerosActivos: activos con nombre, ordenados alfabéticamente (RN49)")
     void semillerosActivos() {
         assertThat(adapter.semillerosActivos(todos()))
@@ -223,8 +254,12 @@ class ReportesRepositoryAdapterTest {
 
         new NamedParameterJdbcTemplate(dataSource).getJdbcTemplate()
                 .update("INSERT INTO semillero_integrante VALUES (7, 1, 'F', 'FEMENINO', 'TUTOR', TRUE, NULL)");
+        String conIntegrante = adapter.huellaDatos();
+        new NamedParameterJdbcTemplate(dataSource).getJdbcTemplate()
+                .update("INSERT INTO asistencia_sesion VALUES (1, 7, 'PRESENTE')");
 
         assertThat(antes).isNotBlank();
+        assertThat(adapter.huellaDatos()).isNotEqualTo(conIntegrante);
         assertThat(adapter.huellaDatos()).isNotEqualTo(antes);
     }
 }

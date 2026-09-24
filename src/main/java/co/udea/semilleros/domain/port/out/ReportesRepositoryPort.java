@@ -2,6 +2,7 @@ package co.udea.semilleros.domain.port.out;
 
 import co.udea.semilleros.domain.model.PageResult;
 import co.udea.semilleros.domain.model.reporte.OrdenRendimiento;
+import co.udea.semilleros.domain.model.reporte.ReporteAsistencia;
 import co.udea.semilleros.domain.model.reporte.ReporteConteo;
 import co.udea.semilleros.domain.model.reporte.ReporteFiltro;
 import co.udea.semilleros.domain.model.reporte.ReporteOpcion;
@@ -39,6 +40,9 @@ public interface ReportesRepositoryPort {
     Map<Integer, Long> semillerosCreadosPorAnio(ReporteFiltro filtro);
 
     List<ReporteConteo> actividadesPorTipo(ReporteFiltro filtro);
+
+    /** Actividades registradas en el período y asistencia agregada de los semilleros filtrados. */
+    ReporteAsistencia asistencia(ReporteFiltro filtro);
 
     PageResult<ReporteRendimiento> rendimiento(ReporteFiltro filtro, int pagina, int tamano,
                                                OrdenRendimiento orden, boolean ascendente);

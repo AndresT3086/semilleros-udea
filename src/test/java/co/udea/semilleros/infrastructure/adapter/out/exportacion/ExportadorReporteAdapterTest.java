@@ -1,7 +1,9 @@
 package co.udea.semilleros.infrastructure.adapter.out.exportacion;
 
+import co.udea.semilleros.domain.model.asistencia.ConteoAsistencia;
 import co.udea.semilleros.domain.model.reporte.AlcanceReporte;
 import co.udea.semilleros.domain.model.reporte.FormatoExportacion;
+import co.udea.semilleros.domain.model.reporte.ReporteAsistencia;
 import co.udea.semilleros.domain.model.reporte.ReporteCompleto;
 import co.udea.semilleros.domain.model.reporte.ReporteConteo;
 import co.udea.semilleros.domain.model.reporte.ReporteDashboard;
@@ -42,7 +44,8 @@ class ExportadorReporteAdapterTest {
                 List.of(new ReporteConteo("FEMENINO", "Femenino", 5), new ReporteConteo("MASCULINO", "Masculino", 3)),
                 List.of(new ReporteConteo("TUTOR", "Tutor", 0)),
                 List.of(new ReporteEvolucion(2025, 3, 3, false), new ReporteEvolucion(2026, 4, 1, true)),
-                List.of());
+                List.of(),
+                new ReporteAsistencia(12, new ConteoAsistencia(90, 10, 5)));
         return new ReporteCompleto(ReporteFiltro.de("2025", "FACULTAD", 1L, 2L, null), dashboard, filas,
                 LocalDateTime.of(2026, 9, 24, 10, 30));
     }
@@ -50,8 +53,8 @@ class ExportadorReporteAdapterTest {
     private static List<ReporteRendimiento> filas() {
         return List.of(
                 new ReporteRendimiento(1L, "Semillero IA; \"Aplicada\"", "SEM-1", "Facultad de Ingeniería",
-                        TipoUnidad.FACULTAD, "Medellín", 1200, 4, null, "ACTIVO"),
-                new ReporteRendimiento(2L, null, "SEM-2", null, null, null, 0, 0, 87.5, "INACTIVO"));
+                        TipoUnidad.FACULTAD, "Medellín", 1200, 4, 0, null, "ACTIVO"),
+                new ReporteRendimiento(2L, null, "SEM-2", null, null, null, 0, 0, 8, 87.5, "INACTIVO"));
     }
 
     @Test
@@ -63,10 +66,10 @@ class ExportadorReporteAdapterTest {
         String[] lineas = new String(archivo, 3, archivo.length - 3, StandardCharsets.UTF_8).split("\r\n");
         assertThat(lineas).hasSize(3);
         assertThat(lineas[0]).isEqualTo("Semillero;Código;Unidad académica;Tipo;Campus;Participantes;"
-                + "Actividades realizadas;% Asistencia;Estado");
+                + "Actividades registradas;Tipos de actividad;% Asistencia;Estado");
         assertThat(lineas[1]).isEqualTo("\"Semillero IA; \"\"Aplicada\"\"\";SEM-1;Facultad de Ingeniería;Facultad;"
-                + "Medellín;1.200;4;No disponible;ACTIVO");
-        assertThat(lineas[2]).isEqualTo("(sin nombre);SEM-2;;;;0;0;87,5 %;INACTIVO");
+                + "Medellín;1.200;0;4;No disponible;ACTIVO");
+        assertThat(lineas[2]).isEqualTo("(sin nombre);SEM-2;;;;0;8;0;87,5 %;INACTIVO");
     }
 
     @Test
@@ -108,6 +111,8 @@ class ExportadorReporteAdapterTest {
             assertThat(kpis.getRow(5).getCell(2).getStringCellValue()).isEqualTo("-5,0 %");
             assertThat(kpis.getRow(7).getCell(1).getStringCellValue()).isEqualTo("80,0 %");
             assertThat(kpis.getRow(7).getCell(2).getStringCellValue()).isEqualTo("+2,5 pp");
+            assertThat(kpis.getRow(8).getCell(1).getStringCellValue()).isEqualTo("12");
+            assertThat(kpis.getRow(9).getCell(1).getStringCellValue()).isEqualTo("90,0 %");
 
             Sheet sexo = libro.getSheet("Integrantes por sexo");
             assertThat(sexo.getRow(3).getCell(2).getStringCellValue()).isEqualTo("62,5 %");

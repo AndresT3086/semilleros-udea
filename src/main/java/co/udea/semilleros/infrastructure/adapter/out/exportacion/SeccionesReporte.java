@@ -1,5 +1,6 @@
 package co.udea.semilleros.infrastructure.adapter.out.exportacion;
 
+import co.udea.semilleros.domain.model.reporte.ReporteAsistencia;
 import co.udea.semilleros.domain.model.reporte.ReporteCompleto;
 import co.udea.semilleros.domain.model.reporte.ReporteConteo;
 import co.udea.semilleros.domain.model.reporte.ReporteDashboard;
@@ -54,7 +55,7 @@ final class SeccionesReporte {
     static List<Seccion> secciones(ReporteCompleto reporte) {
         ReporteDashboard d = reporte.dashboard();
         List<Seccion> secciones = new ArrayList<>();
-        secciones.add(kpis(d.kpis()));
+        secciones.add(kpis(d.kpis(), d.asistencia()));
         secciones.add(rendimiento(reporte.rendimiento()));
         secciones.add(new Seccion("Semilleros por unidad académica",
                 List.of("Unidad académica", "Tipo", "Semilleros", "Estudiantes"),
@@ -78,7 +79,7 @@ final class SeccionesReporte {
     static Seccion rendimiento(List<ReporteRendimiento> filas) {
         return new Seccion("Rendimiento por semillero",
                 List.of("Semillero", "Código", "Unidad académica", "Tipo", "Campus", "Participantes",
-                        "Actividades realizadas", "% Asistencia", "Estado"),
+                        "Actividades registradas", "Tipos de actividad", "% Asistencia", "Estado"),
                 filas.stream().map(r -> fila(
                         Objects.requireNonNullElse(r.nombre(), "(sin nombre)"),
                         r.codigo(),
@@ -86,12 +87,13 @@ final class SeccionesReporte {
                         nombreTipo(r.tipoUnidad()),
                         Objects.requireNonNullElse(r.campus(), ""),
                         numero(r.participantes()),
+                        numero(r.sesiones()),
                         numero(r.actividadesRealizadas()),
                         r.porcentajeAsistencia() == null ? NO_DISPONIBLE : porcentaje(r.porcentajeAsistencia()),
                         r.estado())).toList());
     }
 
-    private static Seccion kpis(ReporteKpis k) {
+    private static Seccion kpis(ReporteKpis k, ReporteAsistencia asistencia) {
         String comparado = "Variación vs " + k.periodoComparado();
         return new Seccion("Indicadores clave", List.of("Indicador", "Valor", comparado), List.of(
                 fila("Semilleros activos", numero(k.semillerosActivos()), variacion(k.tendencias().semillerosActivos())),
@@ -101,7 +103,10 @@ final class SeccionesReporte {
                 fila("Tasa de participación",
                         k.tasaParticipacion() == null ? NO_DISPONIBLE : porcentaje(k.tasaParticipacion()),
                         k.tendencias().tasaParticipacion() == null ? NO_DISPONIBLE
-                                : signo(k.tendencias().tasaParticipacion()) + " pp")));
+                                : signo(k.tendencias().tasaParticipacion()) + " pp"),
+                fila("Actividades registradas con asistencia", numero(asistencia.sesiones()), NO_DISPONIBLE),
+                fila("% Asistencia (excusas descontadas)", asistencia.asistencia().porcentaje() == null ? NO_DISPONIBLE
+                        : porcentaje(asistencia.asistencia().porcentaje()), NO_DISPONIBLE)));
     }
 
     private static Seccion conPorcentaje(String titulo, String categoria, List<ReporteConteo> conteos) {

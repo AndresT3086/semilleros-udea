@@ -88,7 +88,8 @@ public class ConsultarReportesUseCaseImpl implements ConsultarReportesUseCase {
                 reportesRepositoryPort.integrantesPorSexo(filtro),
                 reportesRepositoryPort.integrantesPorRol(filtro),
                 evolucion(filtro),
-                reportesRepositoryPort.actividadesPorTipo(filtro));
+                reportesRepositoryPort.actividadesPorTipo(filtro),
+                reportesRepositoryPort.asistencia(filtro));
     }
 
     @Override
