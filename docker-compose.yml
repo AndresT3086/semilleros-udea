@@ -54,6 +54,12 @@ services:
       MAIL_PORT:               1025
       MAIL_USERNAME:           ""
       MAIL_PASSWORD:           ""
+      # Los correos salen por la API de SendGrid: sin esta clave no se envía nada
+      SENDGRID_API_KEY:        ${SENDGRID_API_KEY:-}
+      MAIL_FROM:               ${MAIL_FROM:-darwin.tangarife@udea.edu.co}
+      MAIL_FROM_NAME:          ${MAIL_FROM_NAME:-Sistema de Semilleros de Investigacion UdeA}
+      # Base de los enlaces de verificación y activación que llegan por correo
+      FRONTEND_URL:            ${FRONTEND_URL:-http://localhost:5173}
       APP_ADMIN_CORREO:        ${APP_ADMIN_CORREO:-admin@udea.edu.co}
     ports:
       - "${APP_PORT:-8080}:8080"

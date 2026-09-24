@@ -121,7 +121,7 @@ public class NotificacionEmailAdapter implements NotificacionEmailPort {
 
     private void enviarCorreo(String destinatario, String asunto, String cuerpo, String enlace) {
         if (enlace != null && registrarEnlacesSinEnvio && (sendGridApiKey == null || sendGridApiKey.isBlank())) {
-            log.info("[desarrollo] Enlace no enviado por correo: {}", enlace);
+            log.warn("[desarrollo] SENDGRID_API_KEY vacía: correo NO enviado a {}. Enlace: {}", destinatario, enlace);
         }
         enviarCorreo(destinatario, asunto, cuerpo);
     }
