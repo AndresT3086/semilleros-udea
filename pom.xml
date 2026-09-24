@@ -25,6 +25,8 @@
         <jjwt.version>0.12.6</jjwt.version>
         <jacoco.version>0.8.12</jacoco.version>
         <sonar.plugin.version>5.1.0.4751</sonar.plugin.version>
+        <poi.version>5.3.0</poi.version>
+        <openpdf.version>1.4.2</openpdf.version>
         <sonar.coverage.jacoco.xmlReportPaths>${project.reporting.outputDirectory}/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
         <sonar.coverage.minimum>0.85</sonar.coverage.minimum>
     </properties>
@@ -150,6 +152,18 @@
             <groupId>com.sendgrid</groupId>
             <artifactId>sendgrid-java</artifactId>
             <version>4.10.2</version>
+        </dependency>
+
+        <!-- Exportación de reportes: Excel (.xlsx) y PDF -->
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>${poi.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.librepdf</groupId>
+            <artifactId>openpdf</artifactId>
+            <version>${openpdf.version}</version>
         </dependency>
     </dependencies>
 
